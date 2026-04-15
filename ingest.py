@@ -1,10 +1,12 @@
 import shutil
 import os
+import time
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from openai import RateLimitError
 
 load_dotenv()
 
@@ -16,6 +18,7 @@ COLUMNS = [
     "콜레스테롤(mg)", "포화지방산(g)", "칼륨(mg)", "칼슘(mg)", "철(mg)"
 ]
 CORE_COLS = ["에너지(kcal)", "탄수화물(g)", "단백질(g)", "지방(g)"]
+EXCLUDE_KEYWORDS = ["간편조리세트"]
 NUTRIENT_LABELS = {
     "에너지(kcal)": ("에너지", "kcal"),
     "탄수화물(g)": ("탄수화물", "g"),
@@ -36,6 +39,9 @@ def load_data(path: str) -> pd.DataFrame:
     df = pd.read_excel(path, usecols=COLUMNS)
     df = df.dropna(subset=["식품명"])
     df = df[~(df[CORE_COLS].fillna(0) == 0).all(axis=1)]
+    df = df[~(df[CORE_COLS] < 0).any(axis=1)]
+    pattern = "|".join(EXCLUDE_KEYWORDS)
+    df = df[~df["식품명"].str.contains(pattern, na=False)]
     return df
 
 
@@ -99,8 +105,16 @@ def ingest():
     )
     for i in range(BATCH_SIZE, len(docs), BATCH_SIZE):
         batch = docs[i : i + BATCH_SIZE]
-        vectorstore.add_documents(batch)
+        for attempt in range(5):
+            try:
+                vectorstore.add_documents(batch)
+                break
+            except RateLimitError:
+                wait = (attempt + 1) * 15
+                print(f"  Rate limit, {wait}초 후 재시도... ({attempt + 1}/5)")
+                time.sleep(wait)
         print(f"  {min(i + BATCH_SIZE, len(docs))}/{len(docs)} 완료")
+        time.sleep(3)
 
     print("완료!")
 
