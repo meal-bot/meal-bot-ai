@@ -1,141 +1,222 @@
-# meal-bot 프로젝트 지침
+# meal-bot 프로젝트 지침 (Claude Code용)
 
-## 프로젝트 목적
-자연어 처리 기반 식단 추천 앱의 AI 서버 파트 (RAG 파이프라인)
+## 프로젝트 개요
 
-## 역할 분담
-- 나: AI 서버 (데이터 정제 + RAG 파이프라인 + FastAPI)
-- 파트너: 프론트(React) + 백엔드(Spring Boot)
+식약처 조리식품 레시피 1,146건 대상 RAG 검색 서비스. 학부 졸업작품.
+
+- **담당**: RAG 서버 (Python) + Spring Boot 백엔드 + React 프론트
+- **작업 방식**: 클로드 웹(설계/흐름 주도) → 명령문 전달 → 클로드 코드(실행)
+- **원칙**: 한 번에 큰 덩어리 금지. 단계 쪼개서 검증 리듬 유지.
+
+---
 
 ## 기술 스택
-- Python 3.11
-- LangChain (langchain-chroma, langchain-openai)
-- OpenAI GPT-4o-mini (LLM, temperature=0.7)
-- OpenAI text-embedding-3-small (임베딩)
-- ChromaDB (벡터DB, persist_directory="vectorstore")
-- FastAPI (API 서버, 예정)
-- Pydantic v2 (스키마)
 
-## 개발 환경
-- 경로: ~/projects/meal-bot
-- venv 활성화 후 작업
-- .env에 OPENAI_API_KEY 설정 완료
+- **RAG**: Python 3.13 + FastAPI (v4 완성 후 도입)
+- **정형 DB**: MySQL on Docker (포트 3308, `meal_bot` DB)
+- **벡터 DB**: ChromaDB (로컬 파일, `rag-api/data/chroma/`)
+- **임베딩**: `jhgan/ko-sbert-nli` (768차원)
+- **LLM**: OpenAI `gpt-4o-mini` (v2 이후 검색 시점 + Golden Set 판정)
+- **백엔드/프론트**: Spring Boot + React (v4 완성 후 연동)
+- **데이터 소스**: 식약처 COOKRCP01 API
 
-## 데이터
-- 원본: data/food_nutrition.xlsx (식품영양DB, 19495행)
-- 출처: 식품의약품안전처 (K-FCDB)
-- 재임베딩 완료 (간편조리세트 제외 후)
-- DB 대분류 총 25개 (ingest 시점 기준)
+---
+
+## 버전 로드맵
+
+| 버전 | 내용                                        | 상태 |
+| ---- | ------------------------------------------- | ---- |
+| v1   | Naive RAG (Chroma 단일 검색)                | 완료 |
+| v2   | LLM 쿼리 재작성 (도메인 어휘 미스매치 해결) | 예정 |
+| v3   | Re-ranking (메타필터 + 영양 수치)           | 예정 |
+| v4   | Agentic (LLM 2회 앙상블, Self-Consistency)  | 예정 |
+
+각 단계마다 **Precision@5, Recall@10으로 Ablation Study**. 공통 Golden Set 고정.
+
+**API 엔드포인트는 v4 코어 완성 후 구축** (스펙 안정화 우선).
+
+---
 
 ## 폴더 구조
+
 ```
 meal-bot/
-├── data/food_nutrition.xlsx
-├── vectorstore/         # Chroma persist
-├── ingest.py            # 완료
-├── chain.py             # 1단계 MVP 완료
-├── main.py              # FastAPI (예정)
-└── .env
+├── rag-api/
+│   ├── scripts/
+│   │   ├── _embedding_text.py
+│   │   ├── collect_recipes.py
+│   │   ├── load_to_mysql.py
+│   │   ├── preview_embedding.py
+│   │   ├── build_vector_db.py
+│   │   ├── test_embedding_model.py
+│   │   ├── inspect_v1_top10.py      # v1 실측 → artifacts/v1_top10.md
+│   │   ├── dump_v1_samples.py
+│   │   ├── label_with_llm.py        # LLM 1차 판정 (서브 챕터 3 완료)
+│   │   └── evaluate_v1.py           # (예정) P@5, R@10 평가
+│   ├── core/                        # 공통 모듈
+│   │   ├── config.py                # 전역 상수/환경변수
+│   │   ├── embedding.py             # 모델 싱글톤
+│   │   ├── db.py                    # MySQL context manager + Chroma 싱글톤
+│   │   └── retrieval.py             # search(query, top_k) → list[Hit]
+│   ├── app/                         # (예정) FastAPI
+│   ├── artifacts/                   # 산출물 (v1_top10.md, golden_set CSV 등)
+│   ├── docs/                        # 판단 기준 문서 (golden_set_criteria.md)
+│   ├── data/
+│   │   ├── raw/recipes_raw.json
+│   │   ├── processed/recipes.json
+│   │   └── chroma/                  # gitignored
+│   ├── venv/
+│   ├── .env / .env.example
+│   └── requirements.txt
+├── backend/                         # (예정) Spring Boot
+├── frontend/                        # (예정) React
+├── docker/mysql/init/01_schema.sql
+├── docker-compose.yml
+└── CLAUDE.md
 ```
 
 ---
 
-## 1단계 MVP 상태 (완료)
-- 점심/저녁 식단 추천만 지원
-- 아침은 미구현 (의도적 스코프 축소)
-- 영양 계산 미구현 (의도적으로 2단계로 미룸)
+## MySQL 스키마 (recipe 테이블)
 
-## 입력/출력 스키마 (chain.py)
+| 컬럼                                  | 타입         | 비고                                       |
+| ------------------------------------- | ------------ | ------------------------------------------ |
+| rcp_seq                               | INT PK       | 식약처 고유 ID                             |
+| name                                  | VARCHAR(200) |                                            |
+| category                              | VARCHAR(50)  | 인덱스 (반찬/일품/후식/국&찌개/기타)       |
+| cooking_way                           | VARCHAR(50)  | 인덱스 (끓이기/기타/굽기/볶기/찌기/튀기기) |
+| ingredients                           | TEXT         |                                            |
+| hash_tag                              | VARCHAR(200) |                                            |
+| calories, carbs, protein, fat, sodium | INT          | calories/sodium 인덱스. **1인분 기준**     |
+| img_main, img_thumb                   | VARCHAR(500) |                                            |
+| manuals                               | JSON         | 조리순서 배열                              |
+| created_at, updated_at                | TIMESTAMP    |                                            |
 
-```python
-class MealRequest(BaseModel):
-    question: str
-    age: int
-    gender: Literal["male", "female"]
-    goal: Literal["diet", "muscle", "none"]
-    meal_time: Literal["점심", "저녁"]
+**중요**:
 
-class Meal(BaseModel):
-    rice: str | None
-    soup: str | None
-    main: str | None
-    banchan: list[str]
-
-class MealResponse(BaseModel):
-    meal: Meal
-    comment: str
-```
-
-- Spring DTO 매핑 고려해 필드명은 영어, 의미는 한국어 도메인 유지 (banchan 등)
-- 아침 추가 시에도 동일 스키마로 커버 예정 (rice/soup/main을 null로 두고 banchan에 담는 방식)
-- 응답 생성: `llm.with_structured_output(MealResponse)` 사용 → JSON 파싱/스키마 자동 강제
-
-## 카테고리 매핑 (확정)
-
-```python
-CATEGORIES = {
-    "rice":    ["밥류", "죽 및 스프류"],
-    "soup":    ["국 및 탕류", "찌개 및 전골류"],
-    "main":    ["구이류", "볶음류", "조림류", "튀김류", "찜류", "전·적 및 부침류"],
-    "banchan": ["나물·숙채류", "생채·무침류", "김치류", "장아찌·절임류", "젓갈류"],
-}
-K_VALUES = {"rice": 3, "soup": 3, "main": 5, "banchan": 5}
-```
-
-- `면 및 만두류`: 초기엔 rice에 포함했으나 실사용에서 라면/냉면이 어색해 제외. 나중에 "면 요리 모드" 별도로 분리 예정
-- 아침 전용 카테고리(빵 및 과자류, 유제품류 및 빙과류, 과일류)는 DB에 존재하나 1단계에선 미사용
-
-## 블랙리스트 (2중 필터)
-
-- **Ingest 단계 (ingest.py의 `EXCLUDE_KEYWORDS`)**: `["간편조리세트"]`
-  - 데이터 품질 문제 → 영구 제외
-  - 수정 시 `python ingest.py` 재실행 필요 (재임베딩)
-- **Query 단계 (chain.py의 `EXCLUDE_KEYWORDS`)**: `["간편조리세트", "떡볶이"]`
-  - 분식류/유연한 제외용
-  - 오버페치(k*3) 후 식품명 부분일치 제거 → k개로 자름
-
-## 프롬프트 설계 (확정)
-
-- **시스템 프롬프트**: 친근한 AI 영양사 톤 (C안 선택)
-- **사용자 정보 블록**: 구조화된 리스트. `goal` 값은 영문 코드 + 의미 설명 병기
-  - `diet` → "체중 감량 (저칼로리, 저지방 음식 우선)"
-  - `muscle` → "근육 증가 (단백질이 풍부한 음식 우선)"
-  - `none` → "특별한 목표 없음 (균형 잡힌 식단)"
-- **후보 음식 블록**: 카테고리별 섹션([밥 후보], [국/찌개 후보], [메인 반찬 후보], [반찬 후보])
-- **음식 표시 포맷**: `이름 | Nkcal / 탄N / 단N / 지N` (핵심 4영양소만)
-- **식품명 정제**: retrieval 시 `_` → 공백 치환 (예: "비빔밥_간편조리세트_꼬막비빔밥")
+- 식약처 원본 이상치 존재 (예: 매생이순두부탕 calories=10 kcal, 해물순두부된장찌개 protein=5g). 보정하지 않음, 보고서에 한계 명시 예정.
+- **Chroma metadata**에는 `rcp_seq, name, category, cooking_way, calories, sodium`만. `protein, carbs, fat, ingredients, hash_tag`는 MySQL에만 존재. **v3 진입 시 metadata 재적재 필요**.
 
 ---
 
-## 개발 순서
+## 임베딩 텍스트 템플릿 (확정)
 
-1. ✅ 공공데이터 수집 및 정제 (food_nutrition.xlsx)
-2. ✅ ingest.py (ChromaDB 임베딩, 간편조리세트 제외)
-3. ✅ chain.py 1단계 MVP (점심/저녁 추천)
-4. 👉 **다음**: 테스트 케이스 확대 → 프롬프트 튜닝
-5. 영양 계산(KDRIs) 추가 및 `nutrition_summary` 필드
-6. 아침 식단 지원
-7. retrieval 병렬화 (asyncio)
-8. main.py FastAPI 엔드포인트
-9. 질병 5가지 연동 (추후)
-10. 알레르기 안내 (추후)
+```python
+"{name}. {category} 요리. {cooking_way} 방식. 주재료 {cleaned_ingredients}. 특징 {hash_tag}."
+```
 
-## 설계 시 중요 판단 원칙 (이 프로젝트에서 적용 중)
+- NULL/"기타" 필드는 생략
+- ingredients 전처리: 수량/단위/괄호/불릿/유니코드 분수 제거
+- category `&` → 공백
+- 평균 60자, 최대 139자 (토큰 128 이내)
 
-- **돌아가는 MVP 먼저, 최적화/분리는 나중에**: 한 파일로 시작, 중복이 보이면 분리
-- **범위 축소가 언제나 안전**: 아침/영양/알레르기는 의도적으로 미룸
-- **실제 결과 보고 수정**: 설계 단계 판단을 실행 결과로 검증해서 바꾸는 걸 주저하지 않음 (면 및 만두류 제외가 대표 사례)
-- **데이터 원본 변형 금지**: 엑셀 손대지 않고 ingest.py 로직으로만 정제
+---
 
-## 다음 대화 시작 시 체크포인트
-- `chain.py` 실행 → 정상 작동 확인
-- EXCLUDE_KEYWORDS에 추가할 항목 있는지 교수님께 확인
-- 다음 작업: 다양한 테스트 케이스로 프롬프트 품질 검증부터
+## 데이터 파이프라인
 
-## 응답 형태 (파트너 연동용)
-- Pydantic 모델 기반 구조화 응답 (LangChain `with_structured_output` 사용)
-- 스키마:
-  - `meal.rice`, `meal.soup`, `meal.main`: str | None
-  - `meal.banchan`: list[str]
-  - `comment`: str (친근한 말투의 추천 이유)
-- 말투는 프롬프트로 조절, JSON 스키마는 Pydantic이 강제
+```
+식약처 API → collect_recipes.py → raw/recipes_raw.json
+→ 정제 → processed/recipes.json (1,146건)
+→ load_to_mysql.py (TRUNCATE → INSERT) → MySQL recipe
+→ build_vector_db.py → Chroma recipes_v1 (1,146 × 768, cosine)
+```
+
+---
+
+## 현재 진행 상태
+
+**Step A 완료**: 데이터 파이프라인, core/ 모듈, v1 베이스라인 실측
+
+**Step B 진행 중** (v1 평가 체계 구축):
+
+- 서브 챕터 1: v1 top-10 실측 (완료) → `artifacts/v1_top10.md`
+- 서브 챕터 2: 판정 기준 합의 (완료) → `docs/golden_set_criteria.md`
+- 서브 챕터 3: LLM 1차 판정 50건 (완료) → `artifacts/golden_set_v1_llm_draft.csv`
+- **서브 챕터 4: 사람 최종 확정 ← 진행 예정**
+- 서브 챕터 5: 쿼리 20개 설계
+- 서브 챕터 6: 200건 전체 라벨링
+
+---
+
+## core/ 사용 규약
+
+- `retrieval.search(query, top_k)` — v1~v4 공통 부품. **시그니처 고정**.
+  - 반환: `list[Hit]` (Hit: recipe_id, name, score, distance, metadata, document)
+- DB 연결은 반드시 `core.db` 경유 (스크립트에서 직접 `pymysql`/`chromadb` 호출 금지)
+- 모델 로드는 반드시 `core.embedding.get_model()` 경유 (싱글톤 보장)
+- 모든 상수는 `core.config` (매직넘버 금지)
+- `scripts/`에서 `core/` import 시 `sys.path.insert(0, str(Path(__file__).parent.parent))` 추가
+
+---
+
+## 보안 규칙 (엄격 준수)
+
+**API 키 노출 사고 2회 발생 후 확립된 규칙**:
+
+- `.env` 파일 내용 출력 명령 **절대 금지**:
+  - `cat .env`, `grep <키이름> .env`, `echo $OPENAI_API_KEY` 등
+- `.env` 관련 조사는 **존재 여부만** 확인:
+  - `test -f .env && echo exists`
+  - `grep -c "OPENAI_API_KEY" .env` (카운트만, 값 미출력)
+- 파일 내용 확인이 불가피한 경우: 명령문에 **"값은 절대 출력하지 말 것"** 반복 명시
+- 환경변수 디버깅 시에도 값 자체는 마스킹 또는 존재 여부만 출력
+
+---
+
+## 알려진 이슈
+
+| 이슈                                           | 현황                                                                                          | 해결 시점             |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------- |
+| `get_chroma_collection()` lru_cache 스테일     | 동일 프로세스에서 collection 재생성 시 캐시에 삭제된 객체 잔존. 스크립트 기반 실행이라 미발현 | FastAPI 도입 시       |
+| `category` NULL 119건                          | 임베딩 텍스트에서 생략 처리 완료                                                              | v2 LLM 자동 분류 검토 |
+| `calories=0` 1건 (rcp_seq=1057)                | 무시                                                                                          | —                     |
+| `ingredients` 빈값 3건 (rcp_seq=691, 692, 831) | 무시                                                                                          | —                     |
+| Chroma metadata 영양소 필드 누락               | `protein, carbs, fat` 등 MySQL에만 존재                                                       | v3 진입 시 재적재     |
+
+---
+
+## 구조적 개선 리스트 (지금 건드리지 말 것, 챕터 전환 시 반영)
+
+1. `scripts/inspect_v1_top10.py`와 `scripts/dump_v1_samples.py`의 `TEST_QUERIES` 중복 → `core/config.py`에 `EVAL_QUERIES`로 통합
+2. `label_with_llm.py` 내 `COMMON_RULES`, `QUERY_CRITERIA` 하드코딩 → v2 진입 시 `prompts.py` 또는 md 읽기로 분리 검토
+3. `artifacts/` gitignore 상태 확인 필요 (CSV는 git 보관 대상)
+
+---
+
+## 작업 스타일
+
+- 한 번에 한 단계씩 (큰 덩어리 금지)
+- 실데이터/실출력 보고 판단 (추측 지양)
+- 돌아가는 v1 먼저, 최적화는 v2 이후
+- 데이터 원본 보존 (raw/ 백업 유지)
+- MySQL + Chroma 역할 분리 (정형 필터 vs 의미 검색)
+
+---
+
+## 금지 사항
+
+- `retrieval.search()` 시그니처 변경
+- `core/` 우회해서 직접 DB/모델 접근
+- 매직넘버 하드코딩
+- `.env` 내용 노출 명령
+- 선제적 최적화 (v2/v3에서 해결될 문제를 v1에서 땜질)
+- 한 번에 여러 파일 대규모 수정
+
+---
+
+## 자주 쓰는 검증 명령
+
+```bash
+# Chroma 상태 확인
+cd rag-api && python -c "from core.db import get_chroma_collection; c = get_chroma_collection(); print(c.count())"
+
+# MySQL 연결 확인
+cd rag-api && python -c "from core.db import mysql_connection; \
+with mysql_connection() as conn: \
+    with conn.cursor() as cur: \
+        cur.execute('SELECT COUNT(*) FROM recipe'); \
+        print(cur.fetchone())"
+
+# v1 실측 재실행
+cd rag-api && python scripts/inspect_v1_top10.py
+```
