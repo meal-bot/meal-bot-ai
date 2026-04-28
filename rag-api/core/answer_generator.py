@@ -215,6 +215,13 @@ def _has_forbidden_expression(text: str) -> bool:
     return any(expr in text for expr in FORBIDDEN_EXPRESSIONS)
 
 
+def _safe_reason(reason: str) -> str:
+    reason = reason.strip()
+    if _has_forbidden_expression(reason):
+        return SAFE_REASON
+    return reason
+
+
 def _parse_llm_json(content: str) -> dict:
     try:
         raw = json.loads(content)
@@ -256,11 +263,7 @@ def _validate_llm_result(result: dict, hits: list[Hit]) -> dict[int, str]:
             raise AnswerFallbackError("recipe_mismatch")
         if not isinstance(reason, str) or not reason.strip():
             raise AnswerFallbackError("empty_reason")
-        if _has_forbidden_expression(reason):
-            reasons_by_id[recipe_id] = SAFE_REASON
-            continue
-
-        reasons_by_id[recipe_id] = reason.strip()
+        reasons_by_id[recipe_id] = _safe_reason(reason)
 
     if set(reasons_by_id) != set(expected_by_id):
         raise AnswerFallbackError("item_count_mismatch")
@@ -275,6 +278,8 @@ def _safe_closing(closing: str) -> str:
 
 
 def _clean_ingredient_text(text: str) -> str:
+    # 주재료 토큰 추출에만 사용하는 정리 함수다.
+    # 최종 answer, 레시피명, reason 문장에는 적용하지 않는다.
     text = re.sub(r"<[^>]*>", " ", text)
     text = text.replace("&nbsp;", " ")
     text = text.replace("&amp;", " ")
