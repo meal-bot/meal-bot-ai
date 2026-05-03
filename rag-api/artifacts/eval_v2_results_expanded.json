@@ -1,0 +1,497 @@
+{
+  "version": "v2",
+  "top_k": 10,
+  "per_query": [
+    {
+      "query_id": "Q1",
+      "query": "얼큰한 국물 요리",
+      "rewrite": {
+        "original_query": "얼큰한 국물 요리",
+        "intent": "국물 요리 검색",
+        "conditions": [],
+        "keywords": [
+          "얼큰한",
+          "국물",
+          "매운",
+          "찌개",
+          "탕"
+        ],
+        "rewritten_query": "얼큰한 국물 요리 매운 국 찌개 탕 국물요리"
+      },
+      "metrics": {
+        "precision_at_5": 0.2,
+        "precision_at_10": 0.2,
+        "ndcg_at_5": 0.3392,
+        "ndcg_at_10": 0.46,
+        "mrr": 1.0
+      },
+      "results": [
+        {
+          "rank": 1,
+          "recipe_id": "630",
+          "name": "설렁탕쑥떡볶이",
+          "score": 0.8115,
+          "final_label": 1
+        },
+        {
+          "rank": 2,
+          "recipe_id": "334",
+          "name": "주꾸미연포탕",
+          "score": 0.795,
+          "final_label": 0
+        },
+        {
+          "rank": 3,
+          "recipe_id": "427",
+          "name": "코다리맑은탕",
+          "score": 0.7861,
+          "final_label": 0
+        },
+        {
+          "rank": 4,
+          "recipe_id": "140",
+          "name": "매생이순두부탕",
+          "score": 0.78,
+          "final_label": 0
+        },
+        {
+          "rank": 5,
+          "recipe_id": "266",
+          "name": "대구지리탕",
+          "score": 0.7791,
+          "final_label": 0
+        },
+        {
+          "rank": 6,
+          "recipe_id": "138",
+          "name": "부대된장찌개",
+          "score": 0.7785,
+          "final_label": 1
+        },
+        {
+          "rank": 7,
+          "recipe_id": "437",
+          "name": "유부완자탕",
+          "score": 0.7718,
+          "final_label": 0
+        },
+        {
+          "rank": 8,
+          "recipe_id": "290",
+          "name": "샤브된장국",
+          "score": 0.7716,
+          "final_label": 0
+        },
+        {
+          "rank": 9,
+          "recipe_id": "275",
+          "name": "해물김치찌개",
+          "score": 0.7703,
+          "final_label": 0
+        },
+        {
+          "rank": 10,
+          "recipe_id": "324",
+          "name": "된장시금치옹심이",
+          "score": 0.7701,
+          "final_label": 0
+        }
+      ]
+    },
+    {
+      "query_id": "Q3",
+      "query": "아이 간식",
+      "rewrite": {
+        "original_query": "아이 간식",
+        "intent": "아이를 위한 간식 레시피 검색",
+        "conditions": [],
+        "keywords": [
+          "어린이 간식",
+          "후식",
+          "디저트",
+          "음료",
+          "빵",
+          "떡"
+        ],
+        "rewritten_query": "아이 간식 어린이 간식 후식 디저트 음료 빵 떡"
+      },
+      "metrics": {
+        "precision_at_5": 0.6,
+        "precision_at_10": 0.4,
+        "ndcg_at_5": 0.5296,
+        "ndcg_at_10": 0.568,
+        "mrr": 0.5
+      },
+      "results": [
+        {
+          "rank": 1,
+          "recipe_id": "613",
+          "name": "인절미 무스와 수정과 아이스크림",
+          "score": 0.6787,
+          "final_label": 0
+        },
+        {
+          "rank": 2,
+          "recipe_id": "1131",
+          "name": "쌀콩죽 요거트",
+          "score": 0.6586,
+          "final_label": 1
+        },
+        {
+          "rank": 3,
+          "recipe_id": "1135",
+          "name": "군고구마 라떼",
+          "score": 0.647,
+          "final_label": 1
+        },
+        {
+          "rank": 4,
+          "recipe_id": "1057",
+          "name": "누룽지 요거트 파르페",
+          "score": 0.6443,
+          "final_label": 1
+        },
+        {
+          "rank": 5,
+          "recipe_id": "1097",
+          "name": "고구마 바나나 무스",
+          "score": 0.6408,
+          "final_label": 0
+        },
+        {
+          "rank": 6,
+          "recipe_id": "897",
+          "name": "과일 젤리",
+          "score": 0.6363,
+          "final_label": 0
+        },
+        {
+          "rank": 7,
+          "recipe_id": "3688",
+          "name": "클로－바",
+          "score": 0.6262,
+          "final_label": 0
+        },
+        {
+          "rank": 8,
+          "recipe_id": "1110",
+          "name": "완두콩 롤",
+          "score": 0.6253,
+          "final_label": 1
+        },
+        {
+          "rank": 9,
+          "recipe_id": "1137",
+          "name": "포도청 보리 수단",
+          "score": 0.6249,
+          "final_label": 0
+        },
+        {
+          "rank": 10,
+          "recipe_id": "1127",
+          "name": "밤 라떼",
+          "score": 0.623,
+          "final_label": 0
+        }
+      ]
+    },
+    {
+      "query_id": "Q4",
+      "query": "매운 반찬",
+      "rewrite": {
+        "original_query": "매운 반찬",
+        "intent": "매운 맛의 반찬을 찾고자 함",
+        "conditions": [],
+        "keywords": [
+          "매운 반찬",
+          "매콤한 반찬",
+          "고추",
+          "양념",
+          "무침",
+          "볶음",
+          "구이"
+        ],
+        "rewritten_query": "매운 반찬 매콤한 반찬 고추 양념 무침 볶음 구이"
+      },
+      "metrics": {
+        "precision_at_5": 0.4,
+        "precision_at_10": 0.4,
+        "ndcg_at_5": 0.5531,
+        "ndcg_at_10": 0.57,
+        "mrr": 1.0
+      },
+      "results": [
+        {
+          "rank": 1,
+          "recipe_id": "383",
+          "name": "매운닭날개구이",
+          "score": 0.8282,
+          "final_label": 1
+        },
+        {
+          "rank": 2,
+          "recipe_id": "827",
+          "name": "고추 장떡",
+          "score": 0.8062,
+          "final_label": 1
+        },
+        {
+          "rank": 3,
+          "recipe_id": "306",
+          "name": "오색볶음면",
+          "score": 0.7908,
+          "final_label": 0
+        },
+        {
+          "rank": 4,
+          "recipe_id": "869",
+          "name": "낙지볶음면",
+          "score": 0.7857,
+          "final_label": 0
+        },
+        {
+          "rank": 5,
+          "recipe_id": "809",
+          "name": "고추잡채",
+          "score": 0.7849,
+          "final_label": 0
+        },
+        {
+          "rank": 6,
+          "recipe_id": "399",
+          "name": "고추김치",
+          "score": 0.7824,
+          "final_label": 0
+        },
+        {
+          "rank": 7,
+          "recipe_id": "3572",
+          "name": "참나물 매콤함박스테이크",
+          "score": 0.7824,
+          "final_label": 1
+        },
+        {
+          "rank": 8,
+          "recipe_id": "3087",
+          "name": "잎채소튀김",
+          "score": 0.7799,
+          "final_label": 0
+        },
+        {
+          "rank": 9,
+          "recipe_id": "579",
+          "name": "콩나물부추볶음",
+          "score": 0.7785,
+          "final_label": 0
+        },
+        {
+          "rank": 10,
+          "recipe_id": "3016",
+          "name": "매운락교무침",
+          "score": 0.7785,
+          "final_label": 1
+        }
+      ]
+    },
+    {
+      "query_id": "Q2",
+      "query": "다이어트 샐러드",
+      "rewrite": {
+        "original_query": "다이어트 샐러드",
+        "intent": "건강한 식사",
+        "conditions": [],
+        "keywords": [
+          "다이어트",
+          "샐러드",
+          "저칼로리",
+          "채소",
+          "가벼운"
+        ],
+        "rewritten_query": "다이어트 샐러드 저칼로리 채소 샐러드 가벼운 샐러드 건강식"
+      },
+      "metrics": {
+        "precision_at_5": 0.4,
+        "precision_at_10": 0.5,
+        "ndcg_at_5": 0.4852,
+        "ndcg_at_10": 0.6012,
+        "mrr": 1.0
+      },
+      "results": [
+        {
+          "rank": 1,
+          "recipe_id": "82",
+          "name": "건강그린 샐러드와 고소한 두유드레싱",
+          "score": 0.7324,
+          "final_label": 1
+        },
+        {
+          "rank": 2,
+          "recipe_id": "2998",
+          "name": "치즈두부샐러드",
+          "score": 0.7194,
+          "final_label": 0
+        },
+        {
+          "rank": 3,
+          "recipe_id": "94",
+          "name": "브로콜리 컬리플라워 샐러드와 두유 요거트 소스",
+          "score": 0.6813,
+          "final_label": 0
+        },
+        {
+          "rank": 4,
+          "recipe_id": "201",
+          "name": "민들레 샐러드",
+          "score": 0.6765,
+          "final_label": 1
+        },
+        {
+          "rank": 5,
+          "recipe_id": "87",
+          "name": "스트로베리 샐러드",
+          "score": 0.6683,
+          "final_label": 0
+        },
+        {
+          "rank": 6,
+          "recipe_id": "826",
+          "name": "참기름 드레싱의 즉석 샐러드",
+          "score": 0.6673,
+          "final_label": 1
+        },
+        {
+          "rank": 7,
+          "recipe_id": "412",
+          "name": "두부채소샐러드",
+          "score": 0.6647,
+          "final_label": 0
+        },
+        {
+          "rank": 8,
+          "recipe_id": "628",
+          "name": "삼색샐러드와두부구이",
+          "score": 0.6647,
+          "final_label": 0
+        },
+        {
+          "rank": 9,
+          "recipe_id": "346",
+          "name": "토마토제철나물 샐러드",
+          "score": 0.6639,
+          "final_label": 1
+        },
+        {
+          "rank": 10,
+          "recipe_id": "865",
+          "name": "구운 닭고기 샐러드와 저나트륨 과일 드레싱",
+          "score": 0.6636,
+          "final_label": 1
+        }
+      ]
+    },
+    {
+      "query_id": "Q5",
+      "query": "고단백 요리",
+      "rewrite": {
+        "original_query": "고단백 요리",
+        "intent": "고단백 요리를 찾고자 함",
+        "conditions": [],
+        "keywords": [
+          "고단백",
+          "단백질",
+          "두부",
+          "생선",
+          "고기",
+          "콩"
+        ],
+        "rewritten_query": "고단백 요리 단백질 많은 음식 두부 생선 계란 고기 콩 요리"
+      },
+      "metrics": {
+        "precision_at_5": 0.2,
+        "precision_at_10": 0.2,
+        "ndcg_at_5": 0.3392,
+        "ndcg_at_10": 0.3188,
+        "mrr": 1.0
+      },
+      "results": [
+        {
+          "rank": 1,
+          "recipe_id": "587",
+          "name": "두부 카프리제",
+          "score": 0.7612,
+          "final_label": 1
+        },
+        {
+          "rank": 2,
+          "recipe_id": "834",
+          "name": "두부 달걀전",
+          "score": 0.7606,
+          "final_label": 0
+        },
+        {
+          "rank": 3,
+          "recipe_id": "588",
+          "name": "두유 마 떡갈비",
+          "score": 0.7552,
+          "final_label": 0
+        },
+        {
+          "rank": 4,
+          "recipe_id": "2970",
+          "name": "두부해물완자",
+          "score": 0.7541,
+          "final_label": 0
+        },
+        {
+          "rank": 5,
+          "recipe_id": "2963",
+          "name": "닭가슴살 두부선",
+          "score": 0.7527,
+          "final_label": 0
+        },
+        {
+          "rank": 6,
+          "recipe_id": "628",
+          "name": "삼색샐러드와두부구이",
+          "score": 0.7486,
+          "final_label": 1
+        },
+        {
+          "rank": 7,
+          "recipe_id": "249",
+          "name": "해산물두부샌드",
+          "score": 0.7483,
+          "final_label": 0
+        },
+        {
+          "rank": 8,
+          "recipe_id": "512",
+          "name": "닭고기스테이크",
+          "score": 0.7431,
+          "final_label": 0
+        },
+        {
+          "rank": 9,
+          "recipe_id": "3091",
+          "name": "알콩달콩전",
+          "score": 0.7431,
+          "final_label": 0
+        },
+        {
+          "rank": 10,
+          "recipe_id": "1095",
+          "name": "두부빼빼로",
+          "score": 0.743,
+          "final_label": 0
+        }
+      ]
+    }
+  ],
+  "average": {
+    "precision_at_5": 0.36,
+    "precision_at_10": 0.34,
+    "ndcg_at_5": 0.4493,
+    "ndcg_at_10": 0.5036,
+    "mrr": 0.9
+  }
+}

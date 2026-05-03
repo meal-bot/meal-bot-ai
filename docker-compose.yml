@@ -10,7 +10,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: meal_bot
-      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_USER: mealbot
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TZ: Asia/Seoul
     command:
