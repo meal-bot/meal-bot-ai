@@ -1,0 +1,85 @@
+# ===== 환경 변수 / 시크릿 =====
+.env
+.env.local
+*.pem
+*.key
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 가상환경
+.venv/
+venv/
+env/
+ENV/
+
+# 패키지/빌드
+*.egg-info/
+dist/
+build/
+.pip-freeze-*
+
+# 테스트/캐시
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ===== 데이터 파일 =====
+# 원본 데이터 (용량 크면 LFS 또는 별도 스토리지)
+data/recipes_raw.json
+data/recipes.json
+
+# 파서 출력물 (재생성 가능)
+data/recipes_cleaned.json
+data/recipes_cleaned_sample.json
+
+# enrichment 출력물
+data/recipes_enriched.json
+data/enrichment_*.json
+
+# Batch / 임시 파일
+data/batch_input.jsonl
+data/batch_output.jsonl
+data/batch_state.json
+data/batch_preview.json
+
+# 주의:
+# data/recipes_hyp_questions.json 은 커밋 추천
+# - 재생성 비용이 들고, ChromaDB 재적재에 필요한 결과물
+# data/parse_report*.json 은 커밋 추천
+# - 파서 검증 기록으로 유용
+# data/enrichment_failures.json 은 data/enrichment_*.json 패턴에 이미 매칭됨
+
+# ===== ChromaDB / Vector DB =====
+chroma/
+
+# ===== DB backups =====
+backups/
+backups/*.sql
+*.sql.bak
+
+# ===== Generated large artifacts =====
+artifacts/manual_search_results.txt
+
+# ===== Local model/cache artifacts =====
+.cache/
+
+# ===== IDE / OS =====
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ===== 로그 =====
+*.log
+logs/
+# Local review notes
+data/sample_review.md

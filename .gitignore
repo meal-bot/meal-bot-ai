@@ -3,7 +3,7 @@
 venv/
 
 # Data & Vector store
-data/
+/data/
 vectorstore/
 
 # Python
@@ -18,3 +18,7 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# ===== Nested app repos / sibling projects =====
+meal-bot-backend/
+meal-bot-frontend/

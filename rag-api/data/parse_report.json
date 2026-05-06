@@ -1,0 +1,962 @@
+{
+  "total": 1146,
+  "missing": 4,
+  "parse_failed": 0,
+  "section_distribution": {
+    "main_only": 937,
+    "with_sauce": 196,
+    "with_garnish": 16
+  },
+  "unknown_headers": [
+    {
+      "rcp_seq": "32",
+      "header": "오이무침"
+    },
+    {
+      "rcp_seq": "38",
+      "header": "멸치육수"
+    },
+    {
+      "rcp_seq": "38",
+      "header": "채소준비"
+    },
+    {
+      "rcp_seq": "95",
+      "header": "치커리 샐러드"
+    },
+    {
+      "rcp_seq": "89",
+      "header": "그린매쉬드포테이토"
+    },
+    {
+      "rcp_seq": "91",
+      "header": "버섯구이"
+    },
+    {
+      "rcp_seq": "91",
+      "header": "곁들임"
+    },
+    {
+      "rcp_seq": "93",
+      "header": "구운채소"
+    },
+    {
+      "rcp_seq": "108",
+      "header": "오렌지 당근펀치"
+    },
+    {
+      "rcp_seq": "111",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "131",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "131",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "181",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "74",
+      "header": "돌나물 샐러드"
+    },
+    {
+      "rcp_seq": "159",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "161",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "162",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "193",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "201",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "202",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "275",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "275",
+      "header": "육수 재료"
+    },
+    {
+      "rcp_seq": "279",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "279",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "282",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "282",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "385",
+      "header": "곁들이 야채"
+    },
+    {
+      "rcp_seq": "394",
+      "header": "대파채"
+    },
+    {
+      "rcp_seq": "398",
+      "header": "라이스버거"
+    },
+    {
+      "rcp_seq": "398",
+      "header": "떡갈비"
+    },
+    {
+      "rcp_seq": "398",
+      "header": "토마토겉절이"
+    },
+    {
+      "rcp_seq": "399",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "399",
+      "header": "절임물"
+    },
+    {
+      "rcp_seq": "506",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "508",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "677",
+      "header": "- 주재료"
+    },
+    {
+      "rcp_seq": "415",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "417",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "421",
+      "header": "소"
+    },
+    {
+      "rcp_seq": "423",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "427",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "533",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "537",
+      "header": "- 밀전병"
+    },
+    {
+      "rcp_seq": "538",
+      "header": "- 튀김반죽"
+    },
+    {
+      "rcp_seq": "538",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "541",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "586",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "325",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "327",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "328",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "328",
+      "header": "곁들이장"
+    },
+    {
+      "rcp_seq": "329",
+      "header": "두부볶음"
+    },
+    {
+      "rcp_seq": "332",
+      "header": "비빔장"
+    },
+    {
+      "rcp_seq": "334",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "336",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "448",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "449",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "450",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "451",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "253",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "253",
+      "header": "고기 밑간"
+    },
+    {
+      "rcp_seq": "360",
+      "header": "절임물"
+    },
+    {
+      "rcp_seq": "360",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "362",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "366",
+      "header": "곁들이 샐러드"
+    },
+    {
+      "rcp_seq": "367",
+      "header": "샐러드"
+    },
+    {
+      "rcp_seq": "471",
+      "header": "- 곁들임"
+    },
+    {
+      "rcp_seq": "476",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "480",
+      "header": "- 곁들임"
+    },
+    {
+      "rcp_seq": "481",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "481",
+      "header": "숙성"
+    },
+    {
+      "rcp_seq": "77",
+      "header": "키위샐러드"
+    },
+    {
+      "rcp_seq": "82",
+      "header": "건강그린 샐러드"
+    },
+    {
+      "rcp_seq": "85",
+      "header": "케일 샐러드"
+    },
+    {
+      "rcp_seq": "163",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "165",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "172",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "18",
+      "header": "버섯볶음"
+    },
+    {
+      "rcp_seq": "18",
+      "header": "곁들임"
+    },
+    {
+      "rcp_seq": "21",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "96",
+      "header": "곤약냉채"
+    },
+    {
+      "rcp_seq": "286",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "286",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "125",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "125",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "210",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "212",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "214",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "314",
+      "header": "소"
+    },
+    {
+      "rcp_seq": "314",
+      "header": "곁들이채소"
+    },
+    {
+      "rcp_seq": "322",
+      "header": "무조림"
+    },
+    {
+      "rcp_seq": "324",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "62",
+      "header": "두부구이"
+    },
+    {
+      "rcp_seq": "140",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "140",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "144",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "146",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "150",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "150",
+      "header": "김치국물"
+    },
+    {
+      "rcp_seq": "232",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "341",
+      "header": "조림장"
+    },
+    {
+      "rcp_seq": "341",
+      "header": "청국장리조뜨"
+    },
+    {
+      "rcp_seq": "341",
+      "header": "곁들이채소"
+    },
+    {
+      "rcp_seq": "342",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "346",
+      "header": "두부크루통"
+    },
+    {
+      "rcp_seq": "347",
+      "header": "청양고추버터"
+    },
+    {
+      "rcp_seq": "349",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "349",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "351",
+      "header": "샐러드"
+    },
+    {
+      "rcp_seq": "354",
+      "header": "곁들이채소"
+    },
+    {
+      "rcp_seq": "491",
+      "header": "- 볶음간장"
+    },
+    {
+      "rcp_seq": "492",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "494",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "497",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "498",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "651",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "651",
+      "header": "밑간"
+    },
+    {
+      "rcp_seq": "651",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "732",
+      "header": "오징어채소말이"
+    },
+    {
+      "rcp_seq": "400",
+      "header": "해독주스"
+    },
+    {
+      "rcp_seq": "406",
+      "header": "맛장"
+    },
+    {
+      "rcp_seq": "408",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "413",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "516",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "517",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "518",
+      "header": "- 만두피"
+    },
+    {
+      "rcp_seq": "518",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "519",
+      "header": "- 소고기 곁들임채소"
+    },
+    {
+      "rcp_seq": "523",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "525",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "678",
+      "header": "- 주재료"
+    },
+    {
+      "rcp_seq": "679",
+      "header": "- 주재료"
+    },
+    {
+      "rcp_seq": "680",
+      "header": "- 주재료"
+    },
+    {
+      "rcp_seq": "681",
+      "header": "- 주재료"
+    },
+    {
+      "rcp_seq": "682",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "684",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "689",
+      "header": "전복영양밥"
+    },
+    {
+      "rcp_seq": "690",
+      "header": "근대쌈밥"
+    },
+    {
+      "rcp_seq": "429",
+      "header": "매쉬포테이토"
+    },
+    {
+      "rcp_seq": "430",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "434",
+      "header": "- 곁들임채소"
+    },
+    {
+      "rcp_seq": "435",
+      "header": "- 곁들임"
+    },
+    {
+      "rcp_seq": "438",
+      "header": "밥패티"
+    },
+    {
+      "rcp_seq": "438",
+      "header": "- 소고기패티"
+    },
+    {
+      "rcp_seq": "440",
+      "header": "- 리코타치즈"
+    },
+    {
+      "rcp_seq": "547",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "548",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "548",
+      "header": "곁들임 채소"
+    },
+    {
+      "rcp_seq": "549",
+      "header": "- 육수"
+    },
+    {
+      "rcp_seq": "550",
+      "header": "- 국물"
+    },
+    {
+      "rcp_seq": "705",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "456",
+      "header": "- 곁들임"
+    },
+    {
+      "rcp_seq": "462",
+      "header": "- 김치떡갈비"
+    },
+    {
+      "rcp_seq": "466",
+      "header": "- 곁들임"
+    },
+    {
+      "rcp_seq": "469",
+      "header": "- 닭가슴살"
+    },
+    {
+      "rcp_seq": "708",
+      "header": "마감자전"
+    },
+    {
+      "rcp_seq": "711",
+      "header": "갈치구이"
+    },
+    {
+      "rcp_seq": "724",
+      "header": "연근배추샐러드"
+    },
+    {
+      "rcp_seq": "371",
+      "header": "뿌리채소조림"
+    },
+    {
+      "rcp_seq": "371",
+      "header": "곁들이김치"
+    },
+    {
+      "rcp_seq": "373",
+      "header": "곁들이야채"
+    },
+    {
+      "rcp_seq": "375",
+      "header": "곁들이채소"
+    },
+    {
+      "rcp_seq": "376",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "379",
+      "header": "소"
+    },
+    {
+      "rcp_seq": "380",
+      "header": "국물"
+    },
+    {
+      "rcp_seq": "2965",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "3014",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3015",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3064",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "3064",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "3158",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3240",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "3016",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3071",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3071",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "3245",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3245",
+      "header": "참나물 페스토"
+    },
+    {
+      "rcp_seq": "3367",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "2976",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "3164",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3363",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "3363",
+      "header": "밑간"
+    },
+    {
+      "rcp_seq": "3268",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3268",
+      "header": "밑간"
+    },
+    {
+      "rcp_seq": "3364",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "849",
+      "header": "이탈리안시즈닝"
+    },
+    {
+      "rcp_seq": "851",
+      "header": "조림장"
+    },
+    {
+      "rcp_seq": "3169",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3365",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "2994",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "2994",
+      "header": "다시마 육수"
+    },
+    {
+      "rcp_seq": "2991",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "2991",
+      "header": "육수재료"
+    },
+    {
+      "rcp_seq": "3177",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3082",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "750",
+      "header": "완자"
+    },
+    {
+      "rcp_seq": "751",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "752",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "753",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "754",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "756",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "760",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "761",
+      "header": "비빔밥"
+    },
+    {
+      "rcp_seq": "762",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "764",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "765",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "766",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "767",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "769",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "770",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "777",
+      "header": "주재료"
+    },
+    {
+      "rcp_seq": "777",
+      "header": "육수"
+    },
+    {
+      "rcp_seq": "1056",
+      "header": "떡꼬치"
+    },
+    {
+      "rcp_seq": "1057",
+      "header": "누룽지"
+    },
+    {
+      "rcp_seq": "1057",
+      "header": "요거트파르페"
+    },
+    {
+      "rcp_seq": "1058",
+      "header": "반죽"
+    },
+    {
+      "rcp_seq": "791",
+      "header": "저나트륨 초고추장"
+    },
+    {
+      "rcp_seq": "824",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "2954",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "2956",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "2956",
+      "header": "피클물"
+    },
+    {
+      "rcp_seq": "3006",
+      "header": "필수재료"
+    },
+    {
+      "rcp_seq": "3013",
+      "header": "필수 재료"
+    },
+    {
+      "rcp_seq": "3096",
+      "header": "필수 재료"
+    }
+  ],
+  "non_numeric_amounts": 122,
+  "had_html_count": 27,
+  "had_unicode_fraction_count": 60,
+  "samples_by_pattern": {
+    "html_tag": [
+      "3459",
+      "3467",
+      "3462",
+      "3463",
+      "3468"
+    ],
+    "unicode_fraction": [
+      "29",
+      "33",
+      "36",
+      "37",
+      "38"
+    ],
+    "section_sauce": [
+      "29",
+      "31",
+      "32",
+      "95",
+      "89"
+    ],
+    "section_garnish": [
+      "28",
+      "111",
+      "113",
+      "131",
+      "161"
+    ],
+    "non_numeric_amount": [
+      "29",
+      "31",
+      "87",
+      "89",
+      "91"
+    ],
+    "missing": [
+      "691",
+      "692",
+      "799",
+      "831"
+    ],
+    "unknown_header": [
+      "32",
+      "38",
+      "95",
+      "89",
+      "91"
+    ],
+    "parse_failed": []
+  }
+}
