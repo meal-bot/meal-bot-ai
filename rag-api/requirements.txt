@@ -4,3 +4,4 @@ pymysql
 cryptography
 chromadb
 sentence-transformers
+tqdm>=4.66.0

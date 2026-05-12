@@ -1,369 +1,226 @@
 """
-build_vector_db.py
+LLM 보강 완료된 레시피를 ChromaDB에 적재.
 
-MySQL recipes 테이블 → ChromaDB 적재 스크립트 (v1 기준선)
-
-- 임베딩 모델: jhgan/ko-sbert-nli
-- 컬렉션명: meal_bot_recipes_v1
-- 저장 경로: chroma/recipes_v1
-- 청킹: 1 레시피 = 1 document
-- document id: recipe_{rcp_seq}
+사용법:
+  python scripts/build_vector_db.py
 """
 
-import argparse
 import json
-import os
-import sys
-from datetime import datetime
+import time
 from pathlib import Path
 
 import chromadb
-import pymysql
-from chromadb.utils import embedding_functions
-from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
 
-# -----------------------------------------------------------------------------
-# 상수
-# -----------------------------------------------------------------------------
-EMBEDDING_MODEL = "jhgan/ko-sbert-nli"
-COLLECTION_NAME = "meal_bot_recipes_v1"
-PERSIST_DIR = "chroma/recipes_v1"
-REPORT_PATH = "artifacts/build_vector_db_report.json"
-ID_PREFIX = "recipe_"
+# ── 경로 ──────────────────────────────────────────────────────────────────────
+INPUT_PATH      = Path("data/recipes_enriched.json")
+CHROMA_PATH     = Path("chroma/recipes_v2")
+COLLECTION_NAME = "meal_bot_recipes_v2"
 
-ARRAY_FIELDS = [
-    "recommended_situations",
-    "meal_type_tags",
-    "taste_tags",
-    "texture_tags",
-    "main_ingredients",
-]
+# ── 모델·배치 ─────────────────────────────────────────────────────────────────
+EMBEDDING_MODEL = "BAAI/bge-m3"
+BATCH_SIZE      = 32
 
-META_SCALAR_FIELDS = [
-    "recipe_id",
-    "name",
-    "category",
-    "cooking_way",
-    "cooking_time",
-    "difficulty",
-    "spicy_level",
-    "calories",
-    "protein",
-    "fat",
-    "sodium",
-    "carbs",
-]
-
-SELECT_COLUMNS = [
-    "recipe_id",
-    "name",
-    "category",
-    "cooking_way",
-    "summary",
-    "cooking_time",
-    "difficulty",
-    "spicy_level",
-    "calories",
-    "protein",
-    "fat",
-    "sodium",
-    "carbs",
-    "meal_type_tags",
-    "recommended_situations",
-    "taste_tags",
-    "texture_tags",
-    "main_ingredients",
-    "hypothetical_questions",
-]
-
-# 실제 schema 컬럼명과의 매핑 (스크립트 내부 이름 → SQL 표현)
-COLUMN_ALIASES = {
-    "recipe_id": "rcp_seq AS recipe_id",
-    "cooking_way": "cooking_method AS cooking_way",
+# ── 라벨 매핑 ─────────────────────────────────────────────────────────────────
+PURPOSE_LABELS: dict[str, str] = {
+    "light":   "가볍게",
+    "protein": "단백질",
+    "hearty":  "든든하게",
+    "tasty":   "맛있게",
+}
+SPICY_LABELS: dict[int, str] = {
+    1: "안 매움",
+    2: "약간 매움",
+    3: "매움",
+    4: "아주 매움",
 }
 
 
-# -----------------------------------------------------------------------------
-# DB
-# -----------------------------------------------------------------------------
-def get_mysql_connection():
-    load_dotenv()
-    return pymysql.connect(
-        host=os.getenv("MYSQL_HOST", "127.0.0.1"),
-        port=int(os.getenv("MYSQL_PORT", "3308")),
-        user=os.getenv("MYSQL_USER"),
-        password=os.getenv("MYSQL_PASSWORD"),
-        database=os.getenv("MYSQL_DATABASE"),
-        charset="utf8mb4",
-        cursorclass=pymysql.cursors.DictCursor,
+# ── 텍스트 빌더 ───────────────────────────────────────────────────────────────
+
+def build_embedding_text(recipe: dict) -> str:
+    """임베딩 대상 텍스트 생성."""
+    name            = recipe.get("name", "")
+    category        = recipe.get("category", "")
+    cooking_method  = recipe.get("cooking_method", "")
+    summary         = recipe.get("summary", "")
+
+    main_ingredients = recipe.get("main_ingredients") or []
+    meal_time        = recipe.get("meal_time") or []
+    purpose          = recipe.get("purpose") or []
+    spicy_level      = recipe.get("spicy_level", 1)
+
+    purpose_str = ", ".join(PURPOSE_LABELS.get(p, p) for p in purpose)
+    spicy_label = SPICY_LABELS.get(spicy_level, "안 매움")
+
+    return (
+        f"{name} | {category} | {cooking_method}\n"
+        f"{summary}\n"
+        f"주재료: {', '.join(main_ingredients)}\n"
+        f"시간대: {', '.join(meal_time)}\n"
+        f"목적: {purpose_str}\n"
+        f"매운맛: {spicy_label}"
     )
 
 
-def fetch_recipes(limit: int | None = None) -> list[dict]:
-    """MySQL recipes 테이블에서 레시피 조회."""
-    cols = ", ".join(COLUMN_ALIASES.get(c, c) for c in SELECT_COLUMNS)
-    sql = f"SELECT {cols} FROM recipes ORDER BY CAST(rcp_seq AS UNSIGNED) ASC"
-    if limit is not None:
-        sql += f" LIMIT {int(limit)}"
+# ── 메타데이터 빌더 ───────────────────────────────────────────────────────────
 
-    conn = get_mysql_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(sql)
-            rows = cur.fetchall()
-    finally:
-        conn.close()
-    return rows
+def build_metadata(recipe: dict) -> dict:
+    """ChromaDB 메타데이터 생성 (스칼라 전용; list는 JSON 직렬화)."""
+    # 영양정보: nutrition이 dict가 아니거나 energy_kcal이 0·None이면 -1.0
+    nutrition = recipe.get("nutrition")
+    if isinstance(nutrition, dict) and nutrition.get("energy_kcal"):
+        kcal     = float(nutrition.get("energy_kcal")    or -1.0)
+        carbs    = float(nutrition.get("carbohydrate_g") or -1.0)
+        protein  = float(nutrition.get("protein_g")      or -1.0)
+        fat      = float(nutrition.get("fat_g")          or -1.0)
+        sodium   = float(nutrition.get("sodium_mg")      or -1.0)
+        if kcal == 0.0:
+            kcal = carbs = protein = fat = sodium = -1.0
+    else:
+        kcal = carbs = protein = fat = sodium = -1.0
 
-
-# -----------------------------------------------------------------------------
-# embedding_text 빌더
-# -----------------------------------------------------------------------------
-def _safe_str(v) -> str:
-    if v is None:
-        return ""
-    return str(v).strip()
-
-
-def _parse_array_field(v) -> list[str]:
-    """MySQL JSON 컬럼은 pymysql이 list로 반환하기도, str로 반환하기도 함."""
-    if v is None:
-        return []
-    if isinstance(v, list):
-        return [str(x).strip() for x in v if x is not None and str(x).strip()]
-    if isinstance(v, str):
-        s = v.strip()
-        if not s:
-            return []
-        try:
-            parsed = json.loads(s)
-            if isinstance(parsed, list):
-                return [str(x).strip() for x in parsed if x is not None and str(x).strip()]
-        except json.JSONDecodeError:
-            pass
-        return [s]
-    return []
-
-
-def build_embedding_text(row: dict) -> str:
-    name = _safe_str(row.get("name"))
-    category = _safe_str(row.get("category"))
-    summary = _safe_str(row.get("summary"))
-
-    situations = ", ".join(_parse_array_field(row.get("recommended_situations")))
-    meal_types = ", ".join(_parse_array_field(row.get("meal_type_tags")))
-    tastes = ", ".join(_parse_array_field(row.get("taste_tags")))
-    textures = ", ".join(_parse_array_field(row.get("texture_tags")))
-    mains = ", ".join(_parse_array_field(row.get("main_ingredients")))
-
-    cooking_time = row.get("cooking_time")
-    cooking_time_str = f"{cooking_time}" if cooking_time is not None else "-"
-    difficulty = _safe_str(row.get("difficulty")) or "-"
-    spicy = row.get("spicy_level")
-    spicy_str = f"{spicy}" if spicy is not None else "-"
-
-    lines = [
-        f"[이름] {name}",
-        f"[카테고리] {category}",
-        f"[요약] {summary}",
-        f"[상황] {situations}",
-        f"[식사유형] {meal_types}",
-        f"[맛] {tastes}",
-        f"[식감] {textures}",
-        f"[주재료] {mains}",
-        f"[조리시간] {cooking_time_str}분 / [난이도] {difficulty} / [매운맛] {spicy_str}/5",
+    # 조리 단계: manuals[].desc 줄바꿈 연결
+    manuals = recipe.get("manuals") or []
+    steps = [
+        step["desc"].strip()
+        for step in manuals
+        if isinstance(step, dict) and step.get("desc", "").strip()
     ]
-    hyp_qs = _parse_array_field(row.get("hypothetical_questions"))
-    if hyp_qs:
-        lines.append(f"[예상질문] {' / '.join(hyp_qs)}")
-    return "\n".join(lines)
+    cooking_steps_text = "\n".join(steps)
+
+    return {
+        "recipe_id":          str(recipe.get("rcp_seq", "")),
+        "name":               str(recipe.get("name", "")),
+        "category":           str(recipe.get("category", "")),
+        "cooking_method":     str(recipe.get("cooking_method", "")),
+        "meal_time":          json.dumps(recipe.get("meal_time") or [],          ensure_ascii=False),
+        "purpose":            json.dumps(recipe.get("purpose") or [],            ensure_ascii=False),
+        "spicy_level":        int(recipe.get("spicy_level", 1)),
+        "summary":            str(recipe.get("summary", "")),
+        "question_1":         str(recipe.get("question_1", "")),
+        "question_2":         str(recipe.get("question_2", "")),
+        "question_3":         str(recipe.get("question_3", "")),
+        "main_ingredients":   json.dumps(recipe.get("main_ingredients") or [],   ensure_ascii=False),
+        "cooking_time":       int(recipe.get("cooking_time", 0)),
+        "image_url":          str(recipe.get("img_main", "") or ""),
+        "thumbnail_url":      str(recipe.get("img_thumb", "") or ""),
+        "cooking_steps_text": cooking_steps_text,
+        "kcal":               kcal,
+        "carbs_g":            carbs,
+        "protein_g":          protein,
+        "fat_g":              fat,
+        "sodium_mg":          sodium,
+    }
 
 
-def build_metadata(row: dict) -> dict:
-    """scalar 필드만 metadata로. None은 키 자체 제외."""
-    meta = {}
-    for f in META_SCALAR_FIELDS:
-        if f not in row:
-            continue
-        v = row[f]
-        if v is None:
-            continue
-        if isinstance(v, (int, float, bool, str)):
-            meta[f] = v
-        else:
-            meta[f] = str(v)
-    return meta
+# ── 메인 ─────────────────────────────────────────────────────────────────────
 
+def main() -> None:
+    # 1. 입력 파일 확인
+    if not INPUT_PATH.exists():
+        print(f"[에러] 입력 파일 없음: {INPUT_PATH}")
+        print("먼저 scripts/enrich_recipes.py를 실행해 recipes_enriched.json을 생성하세요.")
+        return
 
-# -----------------------------------------------------------------------------
-# Chroma
-# -----------------------------------------------------------------------------
-def get_chroma_client():
-    Path(PERSIST_DIR).mkdir(parents=True, exist_ok=True)
-    return chromadb.PersistentClient(path=PERSIST_DIR)
+    # 2. 데이터 로드
+    print(f"데이터 로드 중: {INPUT_PATH}")
+    with INPUT_PATH.open(encoding="utf-8") as f:
+        recipes: list[dict] = json.load(f)
+    print(f"  {len(recipes)}건 로드 완료")
 
+    # 3. ChromaDB 초기화 (기존 컬렉션 삭제 후 재생성)
+    print(f"\nChromaDB 초기화: {CHROMA_PATH}")
+    CHROMA_PATH.mkdir(parents=True, exist_ok=True)
+    client = chromadb.PersistentClient(path=str(CHROMA_PATH))
 
-def get_or_create_collection(client, reset: bool):
-    embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name=EMBEDDING_MODEL
-    )
-    if reset:
-        try:
-            client.delete_collection(COLLECTION_NAME)
-            print(f"[info] 기존 컬렉션 삭제: {COLLECTION_NAME}")
-        except Exception:
-            pass
-    return client.get_or_create_collection(
+    try:
+        client.delete_collection(COLLECTION_NAME)
+        print(f"  기존 컬렉션 '{COLLECTION_NAME}' 삭제")
+    except Exception:
+        pass
+
+    collection = client.create_collection(
         name=COLLECTION_NAME,
-        embedding_function=embed_fn,
         metadata={"hnsw:space": "cosine"},
     )
+    print(f"  컬렉션 '{COLLECTION_NAME}' 생성 완료")
 
+    # 4. 임베딩 모델 로드
+    print(f"\n임베딩 모델 로드 중: {EMBEDDING_MODEL}")
+    print("  (첫 실행 시 ~2.2GB 다운로드 필요)")
+    model = SentenceTransformer(EMBEDDING_MODEL)
+    print("  모델 로드 완료")
 
-def upsert_in_batches(collection, ids, docs, metas, batch_size: int = 100) -> int:
-    total = 0
-    for i in range(0, len(ids), batch_size):
-        collection.upsert(
-            ids=ids[i : i + batch_size],
-            documents=docs[i : i + batch_size],
-            metadatas=metas[i : i + batch_size],
+    # 5. 배치 처리
+    total    = len(recipes)
+    start_ts = time.perf_counter()
+    print(f"\n적재 시작 (총 {total}건, 배치 크기: {BATCH_SIZE})")
+
+    for batch_start in tqdm(
+        range(0, total, BATCH_SIZE),
+        desc="적재 중",
+        unit="배치",
+    ):
+        batch     = recipes[batch_start: batch_start + BATCH_SIZE]
+        ids       = [f"recipe_{r['rcp_seq']}" for r in batch]
+        documents = [build_embedding_text(r) for r in batch]
+        metadatas = [build_metadata(r) for r in batch]
+
+        try:
+            embeddings = model.encode(
+                documents,
+                normalize_embeddings=True,
+                show_progress_bar=False,
+            ).tolist()
+        except Exception as e:
+            names = [r.get("name") or r.get("rcp_seq") for r in batch]
+            print(f"\n[에러] 임베딩 실패 (배치 offset={batch_start}): {e}")
+            print(f"  레시피: {names}")
+            raise
+
+        collection.add(
+            ids=ids,
+            embeddings=embeddings,
+            documents=documents,
+            metadatas=metadatas,
         )
-        total += len(ids[i : i + batch_size])
-        print(f"  upsert {total}/{len(ids)}", end="\r")
-    print()
-    return total
 
+    elapsed = time.perf_counter() - start_ts
 
-# -----------------------------------------------------------------------------
-# 검증 / 샘플 검색
-# -----------------------------------------------------------------------------
-def print_sample_documents(collection, n: int = 3):
-    print("\n[샘플 document 확인]")
-    res = collection.peek(limit=n)
-    ids = res.get("ids", [])
-    docs = res.get("documents", [])
-    metas = res.get("metadatas", [])
-    for i in range(len(ids)):
-        print(f"--- id={ids[i]} ---")
-        text = docs[i] or ""
-        print(text[:600] + ("..." if len(text) > 600 else ""))
-        meta = metas[i] or {}
-        keys = ["recipe_id", "name", "category", "cooking_way", "cooking_time", "calories"]
-        meta_preview = {k: meta.get(k) for k in keys if k in meta}
-        print(f"meta(preview): {meta_preview}")
+    # 6. 검증
+    count = collection.count()
+    print(f"\n총 적재: {count}건 (소요 시간: {elapsed:.1f}초)")
 
+    if count != total:
+        print(f"[경고] 예상 {total}건 vs 실제 {count}건 — 불일치 확인 필요")
 
-def run_sample_search(collection):
-    queries = ["매콤한 국물", "다이어트 도시락", "아이 반찬"]
-    print("\n[샘플 검색 결과 (top-5)]")
-    for q in queries:
-        print(f"\n>>> query: {q}")
-        res = collection.query(query_texts=[q], n_results=5)
-        ids = res["ids"][0]
-        metas = res["metadatas"][0]
-        dists = res["distances"][0]
-        for rank, (rid, meta, dist) in enumerate(zip(ids, metas, dists), 1):
-            name = meta.get("name", "?")
-            cat = meta.get("category", "?")
-            print(f"  {rank}. [{cat}] {name}  (id={rid}, dist={dist:.4f})")
+    # 샘플 검색 (BGE-M3로 쿼리 임베딩 후 query_embeddings 사용)
+    sample_query = "비 오는 날 따뜻한 국물이 먹고 싶을 때"
+    print(f"\n샘플 검색: '{sample_query}'")
 
+    query_embedding = model.encode(
+        [sample_query],
+        normalize_embeddings=True,
+        show_progress_bar=False,
+    ).tolist()
 
-# -----------------------------------------------------------------------------
-# Report
-# -----------------------------------------------------------------------------
-def write_report(report: dict):
-    Path(REPORT_PATH).parent.mkdir(parents=True, exist_ok=True)
-    with open(REPORT_PATH, "w", encoding="utf-8") as f:
-        json.dump(report, f, ensure_ascii=False, indent=2)
-    print(f"\n[report] {REPORT_PATH}")
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=3,
+    )
 
+    for i, (doc, meta, dist) in enumerate(zip(
+        results["documents"][0],
+        results["metadatas"][0],
+        results["distances"][0],
+    )):
+        print(f"\n[{i+1}] {meta['name']} (distance={dist:.3f})")
+        print(f"    category: {meta['category']} | meal_time: {meta['meal_time']}")
+        print(f"    summary: {meta['summary'][:60]}...")
 
-# -----------------------------------------------------------------------------
-# main
-# -----------------------------------------------------------------------------
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--reset", action="store_true", help="기존 컬렉션 삭제 후 재생성")
-    parser.add_argument("--limit", type=int, default=None, help="테스트용 일부만 적재")
-    parser.add_argument("--sample-search", action="store_true", help="적재 후 샘플 검색 실행")
-    args = parser.parse_args()
-
-    print(f"[1/4] MySQL 조회")
-    rows = fetch_recipes(limit=args.limit)
-    fetched_count = len(rows)
-    print(f"  fetched: {fetched_count}")
-    if fetched_count == 0:
-        print("[error] 조회된 레시피가 없습니다.", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"[2/4] embedding_text / metadata 빌드")
-    ids, docs, metas = [], [], []
-    text_lengths = []
-    hyp_present = 0
-    hyp_missing_ids: list[str] = []
-    for r in rows:
-        rid = r.get("recipe_id")
-        if rid is None:
-            continue
-        text = build_embedding_text(r)
-        meta = build_metadata(r)
-        ids.append(f"{ID_PREFIX}{rid}")
-        docs.append(text)
-        metas.append(meta)
-        text_lengths.append(len(text))
-        if _parse_array_field(r.get("hypothetical_questions")):
-            hyp_present += 1
-        else:
-            hyp_missing_ids.append(str(rid))
-    print(f"  built: {len(ids)}")
-    print(f"  hypothetical_questions coverage: {hyp_present}/{len(ids)}")
-
-    print(f"[3/4] Chroma 적재 (model={EMBEDDING_MODEL}, collection={COLLECTION_NAME})")
-    client = get_chroma_client()
-    collection = get_or_create_collection(client, reset=args.reset)
-    upserted_count = upsert_in_batches(collection, ids, docs, metas, batch_size=100)
-    collection_count = collection.count()
-    print(f"  upserted: {upserted_count}")
-    print(f"  collection.count(): {collection_count}")
-
-    print(f"[4/4] 검증")
-    print(f"  MySQL fetched: {fetched_count}")
-    print(f"  Chroma upserted: {upserted_count}")
-    print(f"  collection.count(): {collection_count}")
-
-    # 전체 적재 시 count 일치 검증
-    if args.limit is None:
-        if fetched_count != upserted_count or upserted_count != collection_count:
-            print(
-                f"[error] count mismatch: fetched={fetched_count}, "
-                f"upserted={upserted_count}, collection={collection_count}",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-    print_sample_documents(collection, n=3)
-
-    if args.sample_search:
-        run_sample_search(collection)
-
-    avg_len = sum(text_lengths) / len(text_lengths) if text_lengths else 0
-    report = {
-        "collection_name": COLLECTION_NAME,
-        "persist_directory": PERSIST_DIR,
-        "embedding_model": EMBEDDING_MODEL,
-        "id_prefix": ID_PREFIX,
-        "source": "mysql.recipes",
-        "fetched_count": fetched_count,
-        "upserted_count": upserted_count,
-        "collection_count": collection_count,
-        "avg_embedding_text_length": round(avg_len, 2),
-        "min_embedding_text_length": min(text_lengths) if text_lengths else 0,
-        "max_embedding_text_length": max(text_lengths) if text_lengths else 0,
-        "hypothetical_questions_coverage": f"{hyp_present}/{len(ids)}",
-        "hypothetical_questions_missing": hyp_missing_ids[:20],
-        "created_at": datetime.now().isoformat(timespec="seconds"),
-    }
-    write_report(report)
+    print(f"\n저장 경로: {CHROMA_PATH}")
 
 
 if __name__ == "__main__":

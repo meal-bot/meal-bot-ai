@@ -83,3 +83,4 @@ Thumbs.db
 logs/
 # Local review notes
 data/sample_review.md
+artifacts/enrichment_progress/
