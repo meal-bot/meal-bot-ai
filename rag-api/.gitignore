@@ -84,3 +84,12 @@ logs/
 # Local review notes
 data/sample_review.md
 artifacts/enrichment_progress/
+
+# BM25 인덱스 (재생성 가능)
+bm25/
+
+# enrichment v2 진행 상태
+artifacts/enrichment_v2_progress/
+
+# enrichment 백업
+data/recipes_enriched.backup.json
