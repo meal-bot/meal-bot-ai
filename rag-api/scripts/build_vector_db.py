@@ -14,7 +14,7 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
 # ── 경로 ──────────────────────────────────────────────────────────────────────
-INPUT_PATH      = Path("data/recipes_enriched.json")
+INPUT_PATH      = Path("data/recipes_enriched_v2.json")
 CHROMA_PATH     = Path("chroma/recipes_v2")
 COLLECTION_NAME = "meal_bot_recipes_v2"
 
@@ -50,9 +50,17 @@ def build_embedding_text(recipe: dict) -> str:
     meal_time        = recipe.get("meal_time") or []
     purpose          = recipe.get("purpose") or []
     spicy_level      = recipe.get("spicy_level", 1)
+    cooking_time     = recipe.get("cooking_time")
+
+    taste_tags             = recipe.get("taste_tags") or []
+    texture_tags           = recipe.get("texture_tags") or []
+    recommended_situations = recipe.get("recommended_situations") or []
+    dish_type_tags         = recipe.get("dish_type_tags") or []
+    difficulty             = recipe.get("difficulty", "")
 
     purpose_str = ", ".join(PURPOSE_LABELS.get(p, p) for p in purpose)
     spicy_label = SPICY_LABELS.get(spicy_level, "안 매움")
+    time_line   = f"조리시간: 약 {cooking_time}분" if cooking_time is not None else "조리시간: 미상"
 
     return (
         f"{name} | {category} | {cooking_method}\n"
@@ -60,7 +68,13 @@ def build_embedding_text(recipe: dict) -> str:
         f"주재료: {', '.join(main_ingredients)}\n"
         f"시간대: {', '.join(meal_time)}\n"
         f"목적: {purpose_str}\n"
-        f"매운맛: {spicy_label}"
+        f"매운맛: {spicy_label}\n"
+        f"{time_line}\n"
+        f"음식유형: {', '.join(dish_type_tags)}\n"
+        f"맛: {', '.join(taste_tags)}\n"
+        f"식감: {', '.join(texture_tags)}\n"
+        f"추천상황: {', '.join(recommended_situations)}\n"
+        f"난이도: {difficulty}"
     )
 
 
@@ -72,7 +86,7 @@ def build_metadata(recipe: dict) -> dict:
     nutrition = recipe.get("nutrition")
     if isinstance(nutrition, dict) and nutrition.get("energy_kcal"):
         kcal     = float(nutrition.get("energy_kcal")    or -1.0)
-        carbs    = float(nutrition.get("carbohydrate_g") or -1.0)
+        carbs    = float(nutrition.get("carbs_g")         or -1.0)
         protein  = float(nutrition.get("protein_g")      or -1.0)
         fat      = float(nutrition.get("fat_g")          or -1.0)
         sodium   = float(nutrition.get("sodium_mg")      or -1.0)
@@ -106,8 +120,13 @@ def build_metadata(recipe: dict) -> dict:
         "cooking_time":       int(recipe.get("cooking_time", 0)),
         "image_url":          str(recipe.get("img_main", "") or ""),
         "thumbnail_url":      str(recipe.get("img_thumb", "") or ""),
-        "cooking_steps_text": cooking_steps_text,
-        "kcal":               kcal,
+        "cooking_steps_text":    cooking_steps_text,
+        "taste_tags":            json.dumps(recipe.get("taste_tags") or [],             ensure_ascii=False),
+        "texture_tags":          json.dumps(recipe.get("texture_tags") or [],           ensure_ascii=False),
+        "recommended_situations":json.dumps(recipe.get("recommended_situations") or [], ensure_ascii=False),
+        "dish_type_tags":        json.dumps(recipe.get("dish_type_tags") or [],         ensure_ascii=False),
+        "difficulty":            str(recipe.get("difficulty") or ""),
+        "kcal":                  kcal,
         "carbs_g":            carbs,
         "protein_g":          protein,
         "fat_g":              fat,
