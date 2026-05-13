@@ -1,0 +1,479 @@
+════════════════════════════════════════════════════════════
+[q01 / 맛-단순] 매콤한 국물 요리
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=743 | 매생이조랭이떡국
+       rrf=0.0280 | D=1 | B=26
+       category: 국&찌개 | method: 끓이기 | cooking_time: 25분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '밥요리']
+       taste_tags:             ['담백한', '시원한']
+       texture_tags:           ['국물있는', '쫄깃한', '부드러운']
+       recommended_situations: ['가벼운한끼', '해장']
+       summary: 조랭이떡과 매생이, 굴을 끓여낸 담백한 해조류 풍미의 국물 요리입니다.
+
+Rank 2 | recipe_id=140 | 매생이순두부탕
+       rrf=0.0267 | D=7 | B=25
+       category: 국&찌개 | method: 끓이기 | cooking_time: 25분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['담백한', '고소한']
+       texture_tags:           ['부드러운', '국물있는']
+       recommended_situations: ['가벼운한끼', '해장']
+       summary: 매생이와 순두부, 홍합을 끓여 만든 담백한 국물 요리입니다.
+
+Rank 3 | recipe_id=3060 | 낙지묵은지콩나물국
+       rrf=0.0263 | D=18 | B=14
+       category: 국&찌개 | method: 끓이기 | cooking_time: 25분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['담백한', '깔끔한', '시원한']
+       texture_tags:           ['국물있는', '아삭한']
+       recommended_situations: ['해장', '가벼운한끼']
+       summary: 낙지와 묵은지, 콩나물을 끓여 만든 담백하고 개운한 국물 요리입니다.
+
+Rank 4 | recipe_id=311 | 토마토라면
+       rrf=0.0257 | D=25 | B=12
+       category: 국&찌개 | method: 끓이기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '면요리']
+       taste_tags:             ['새콤한', '시원한']
+       texture_tags:           ['국물있는', '쫄깃한']
+       recommended_situations: ['혼밥', '야식', '든든한한끼']
+       summary: 토마토와 라면을 끓여 만든 상큼하고 개운한 국물 요리입니다.
+
+Rank 5 | recipe_id=975 | 알록달록 시금치 당근 수제비
+       rrf=0.0253 | D=8 | B=34
+       category: 국&찌개 | method: 끓이기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['담백한', '깔끔한']
+       texture_tags:           ['부드러운', '국물있는']
+       recommended_situations: ['가벼운한끼', '어르신식']
+       summary: 시금치와 당근 반죽으로 만든 알록달록한 담백한 수제비 국물 요리입니다.
+
+════════════════════════════════════════════════════════════
+[q02 / 맛-조합] 달콤하고 부드러운 디저트
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=1114 | 두부있슈
+       rrf=0.0318 | D=1 | B=5
+       category: 후식 | method: 굽기 | cooking_time: 60분 | difficulty: 어려움
+       dish_type_tags:         ['디저트', '간식']
+       taste_tags:             ['달콤한', '담백한']
+       texture_tags:           ['부드러운', '촉촉한', '폭신한']
+       recommended_situations: ['손님상', '아이식', '가벼운한끼']
+       summary: 연두부와 요거트를 넣어 구운 부드럽고 촉촉한 슈 디저트로, 딸기와 호두로 속을 채운 달콤한 과자입니다.
+
+Rank 2 | recipe_id=1134 | 렌틸콩 두유
+       rrf=0.0305 | D=5 | B=6
+       category: 후식 | method: 기타 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['디저트']
+       taste_tags:             ['달콤한', '새콤한', '고소한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['손님상', '가벼운한끼']
+       summary: 렌틸콩과 우유, 딸기를 갈아 만든 부드럽고 상큼한 두유형 디저트입니다.
+
+Rank 3 | recipe_id=998 | 고구마란
+       rrf=0.0280 | D=24 | B=2
+       category: 후식 | method: 찌기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['디저트']
+       taste_tags:             ['달콤한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['가벼운한끼', '다이어트']
+       summary: 고구마를 쪄서 꿀과 계피로 버무린 달콤하고 부드러운 디저트입니다.
+
+Rank 4 | recipe_id=591 | 망고무스케이크와 마카롱
+       rrf=0.0273 | D=7 | B=21
+       category: 후식 | method: 굽기 | cooking_time: 80분 | difficulty: 어려움
+       dish_type_tags:         ['디저트', '간식']
+       taste_tags:             ['달콤한', '고소한']
+       texture_tags:           ['부드러운', '쫄깃한']
+       recommended_situations: ['손님상', '가벼운한끼']
+       summary: 망고퓨레와 달걀, 아몬드를 사용해 구운 마카롱과 부드러운 망고 무스를 조합한 달콤한 디저트입니다.
+
+Rank 5 | recipe_id=953 | 사과 포도주스 조림
+       rrf=0.0270 | D=13 | B=15
+       category: 후식 | method: 조림 | cooking_time: 25분 | difficulty: 보통
+       dish_type_tags:         ['디저트']
+       taste_tags:             ['달콤한', '시원한']
+       texture_tags:           ['촉촉한', '부드러운']
+       recommended_situations: ['가벼운한끼', '손님상']
+       summary: 사과와 포도주스를 졸여 만든 달콤하고 시원한 조림 디저트입니다.
+
+════════════════════════════════════════════════════════════
+[q03 / 재료] 두부 들어간 반찬
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=258 | 두부곤약조림
+       rrf=0.0299 | D=5 | B=9
+       category: 반찬 | method: 조림 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['반찬']
+       taste_tags:             ['담백한', '깔끔한']
+       texture_tags:           ['쫄깃한', '촉촉한']
+       recommended_situations: ['가벼운한끼', '어르신식']
+       summary: 곤약과 두부를 조림해 만든 담백하고 가벼운 반찬입니다.
+
+Rank 2 | recipe_id=587 | 두부 카프리제
+       rrf=0.0295 | D=2 | B=15
+       category: 반찬 | method: 굽기 | cooking_time: 20분 | difficulty: 보통
+       dish_type_tags:         ['반찬', '샐러드']
+       taste_tags:             ['담백한', '새콤한', '고소한']
+       texture_tags:           ['부드러운', '아삭한', '촉촉한']
+       recommended_situations: ['가벼운한끼', '손님상', '혼밥']
+       summary: 두부와 토마토를 팬에 살짝 구워 담백한 샐러드형 반찬입니다.
+
+Rank 3 | recipe_id=243 | 두부말이찜
+       rrf=0.0290 | D=6 | B=12
+       category: 반찬 | method: 찌기 | cooking_time: 35분 | difficulty: 보통
+       dish_type_tags:         ['반찬']
+       taste_tags:             ['담백한', '고소한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['손님상', '다이어트', '가벼운한끼']
+       summary: 두부와 닭가슴살, 표고버섯을 섞어 쪄낸 담백한 찜 요리입니다.
+
+Rank 4 | recipe_id=421 | 뿌리채소두부선
+       rrf=0.0285 | D=16 | B=5
+       category: 반찬 | method: 찌기 | cooking_time: 55분 | difficulty: 어려움
+       dish_type_tags:         ['반찬']
+       taste_tags:             ['고소한', '담백한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['가벼운한끼', '어르신식']
+       summary: 두부와 우엉, 인삼을 섞어 쪄낸 부드럽고 고소한 찜 요리입니다.
+
+Rank 5 | recipe_id=836 | 두부 튀김 조림
+       rrf=0.0284 | D=1 | B=23
+       category: 반찬 | method: 조림 | cooking_time: 35분 | difficulty: 보통
+       dish_type_tags:         ['반찬']
+       taste_tags:             ['달콤한', '짭짤한', '고소한']
+       texture_tags:           ['바삭한', '촉촉한']
+       recommended_situations: ['손님상', '혼밥']
+       summary: 두부와 피망·파프리카를 튀겨 조림장에 졸여 만든 달콤짭짤한 반찬입니다.
+
+════════════════════════════════════════════════════════════
+[q04 / 시간] 10분 안에 만드는 간단한 한 끼
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=563 | 미니함박스테이크
+       rrf=0.0164 | D=1 | B=-
+       category: 일품 | method: 굽기 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['메인요리']
+       taste_tags:             ['담백한', '고소한', '달콤한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['손님상', '든든한한끼']
+       summary: 소고기와 돼지고기를 굽고 배 소스를 올려 만든 부드럽고 담백한 미니 함박스테이크입니다.
+
+Rank 2 | recipe_id=212 | 구운 바나나
+       rrf=0.0164 | D=- | B=1
+       category: 후식 | method: 굽기 | cooking_time: 10분 | difficulty: 쉬움
+       dish_type_tags:         ['디저트', '간식']
+       taste_tags:             ['달콤한', '고소한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['가벼운한끼', '아이식']
+       summary: 바나나를 팬에 구워 설탕과 호두를 얹은 달콤하고 부드러운 후식입니다.
+
+Rank 3 | recipe_id=923 | 시금치 배 미음
+       rrf=0.0161 | D=2 | B=-
+       category: 국&찌개 | method: 끓이기 | cooking_time: 25분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '밥요리']
+       taste_tags:             ['담백한', '달콤한', '깔끔한']
+       texture_tags:           ['부드러운', '촉촉한', '국물있는']
+       recommended_situations: ['어르신식', '가벼운한끼']
+       summary: 불린쌀과 배, 시금치를 끓여 만든 부드럽고 가벼운 미음 요리입니다.
+
+Rank 4 | recipe_id=3170 | 배깍두기
+       rrf=0.0161 | D=- | B=2
+       category: 반찬 | method: 무치기 | cooking_time: 10분 | difficulty: 쉬움
+       dish_type_tags:         ['반찬']
+       taste_tags:             ['새콤한', '달콤한', '고소한']
+       texture_tags:           ['아삭한', '촉촉한']
+       recommended_situations: ['가벼운한끼', '손님상']
+       summary: 배와 부추를 고춧가루와 매실청으로 버무려 새콤달콤하고 아삭한 무침 반찬입니다.
+
+Rank 5 | recipe_id=438 | 미니밥버거
+       rrf=0.0159 | D=3 | B=-
+       category: 일품 | method: 굽기 | cooking_time: 50분 | difficulty: 어려움
+       dish_type_tags:         ['메인요리', '분식']
+       taste_tags:             ['고소한', '담백한']
+       texture_tags:           ['쫄깃한', '촉촉한']
+       recommended_situations: ['가벼운한끼', '혼밥', '도시락']
+       summary: 찹쌀과 현미로 만든 밥패티에 소고기 패티와 치즈를 구워 만든 고소한 미니 밥버거입니다.
+
+════════════════════════════════════════════════════════════
+[q05 / 상황-다이어트] 다이어트에 좋은 저칼로리 메뉴
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=950 | 두부양갱
+       rrf=0.0323 | D=3 | B=1
+       category: 후식 | method: 기타 | cooking_time: 25분 | difficulty: 보통
+       dish_type_tags:         ['디저트']
+       taste_tags:             ['담백한', '달콤한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['가벼운한끼', '손님상']
+       summary: 두부와 한천을 섞어 굳힌 부드럽고 담백한 저칼로리 양갱입니다.
+
+Rank 2 | recipe_id=386 | 다이어트국수
+       rrf=0.0309 | D=1 | B=9
+       category: 일품 | method: 삶기 | cooking_time: 20분 | difficulty: 보통
+       dish_type_tags:         ['면요리', '메인요리']
+       taste_tags:             ['새콤한', '깔끔한', '담백한']
+       texture_tags:           ['쫄깃한', '아삭한', '국물있는']
+       recommended_situations: ['다이어트', '가벼운한끼', '혼밥']
+       summary: 실곤약을 삶아 물김치국물과 어울린 상큼하고 가벼운 냉국수입니다.
+
+Rank 3 | recipe_id=998 | 고구마란
+       rrf=0.0261 | D=25 | B=10
+       category: 후식 | method: 찌기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['디저트']
+       taste_tags:             ['달콤한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['가벼운한끼', '다이어트']
+       summary: 고구마를 쪄서 꿀과 계피로 버무린 달콤하고 부드러운 디저트입니다.
+
+Rank 4 | recipe_id=3006 | 저염 겉절이
+       rrf=0.0254 | D=4 | B=42
+       category: 반찬 | method: 무치기 | cooking_time: 15분 | difficulty: 쉬움
+       dish_type_tags:         ['반찬']
+       taste_tags:             ['담백한', '깔끔한', '고소한']
+       texture_tags:           ['아삭한']
+       recommended_situations: ['가벼운한끼', '다이어트', '혼밥']
+       summary: 배추와 무, 쪽파를 버무려 만든 담백하고 저염인 겉절이입니다.
+
+Rank 5 | recipe_id=1075 | 현미 고구마 아란치니
+       rrf=0.0231 | D=17 | B=39
+       category: 일품 | method: 튀기기 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['간식']
+       taste_tags:             ['고소한', '담백한']
+       texture_tags:           ['바삭한', '촉촉한']
+       recommended_situations: ['다이어트', '혼밥']
+       summary: 현미밥과 고구마를 속으로 넣어 빵가루를 입혀 튀긴 바삭한 간식입니다.
+
+════════════════════════════════════════════════════════════
+[q06 / 상황-야식] 혼자 먹기 좋은 야식
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=443 | 밥핫도그
+       rrf=0.0299 | D=8 | B=6
+       category: 일품 | method: 튀기기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['분식', '간식']
+       taste_tags:             ['고소한', '짭짤한', '담백한']
+       texture_tags:           ['바삭한', '촉촉한']
+       recommended_situations: ['야식', '혼밥', '가벼운한끼']
+       summary: 소시지와 밥을 튀겨 만든 바삭하고 든든한 간식입니다.
+
+Rank 2 | recipe_id=1002 | 야채칩
+       rrf=0.0277 | D=18 | B=7
+       category: 후식 | method: 굽기 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['간식']
+       taste_tags:             ['고소한', '짭짤한', '담백한']
+       texture_tags:           ['바삭한', '아삭한']
+       recommended_situations: ['가벼운한끼', '야식', '손님상']
+       summary: 연근·고구마·감자 등을 오븐에 구워 만든 바삭한 야채칩입니다.
+
+Rank 3 | recipe_id=306 | 오색볶음면
+       rrf=0.0260 | D=3 | B=39
+       category: 일품 | method: 볶기 | cooking_time: 25분 | difficulty: 보통
+       dish_type_tags:         ['메인요리', '면요리']
+       taste_tags:             ['매콤한', '고소한']
+       texture_tags:           ['쫄깃한', '촉촉한']
+       recommended_situations: ['야식', '든든한한끼']
+       summary: 라면과 돼지고기, 다양한 채소를 볶아 만든 살짝 매콤한 풍미의 볶음면입니다.
+
+Rank 4 | recipe_id=311 | 토마토라면
+       rrf=0.0259 | D=14 | B=21
+       category: 국&찌개 | method: 끓이기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '면요리']
+       taste_tags:             ['새콤한', '시원한']
+       texture_tags:           ['국물있는', '쫄깃한']
+       recommended_situations: ['혼밥', '야식', '든든한한끼']
+       summary: 토마토와 라면을 끓여 만든 상큼하고 개운한 국물 요리입니다.
+
+Rank 5 | recipe_id=309 | 삼겹살라면
+       rrf=0.0257 | D=2 | B=44
+       category: 일품 | method: 끓이기 | cooking_time: 60분 | difficulty: 어려움
+       dish_type_tags:         ['메인요리', '국물요리']
+       taste_tags:             ['고소한', '진한']
+       texture_tags:           ['국물있는', '쫄깃한', '촉촉한']
+       recommended_situations: ['든든한한끼', '야식']
+       summary: 삼겹살과 라면을 끓여 만든 고소하고 진한 국물 요리입니다.
+
+════════════════════════════════════════════════════════════
+[q07 / 대상-아이] 아이가 먹기 좋은 부드러운 요리
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=40 | 호박 고구마 스프
+       rrf=0.0306 | D=9 | B=2
+       category: 국&찌개 | method: 끓이기 | cooking_time: 35분 | difficulty: 보통
+       dish_type_tags:         ['국물요리']
+       taste_tags:             ['달콤한', '담백한', '고소한']
+       texture_tags:           ['부드러운', '꾸덕한', '국물있는']
+       recommended_situations: ['아이식', '아이식', '아이식']
+       summary: 고구마와 단호박을 우유와 함께 끓여 부드럽고 달콤한 크림형 스프입니다.
+
+Rank 2 | recipe_id=673 | 찬밥이용닭죽
+       rrf=0.0297 | D=15 | B=1
+       category: 일품 | method: 끓이기 | cooking_time: 45분 | difficulty: 어려움
+       dish_type_tags:         ['밥요리', '국물요리']
+       taste_tags:             ['담백한', '깔끔한']
+       texture_tags:           ['부드러운', '국물있는']
+       recommended_situations: ['아이식', '아이식']
+       summary: 찬밥과 닭다리살을 끓여 만든 부드럽고 담백한 죽 요리입니다.
+
+Rank 3 | recipe_id=316 | 비타민이유식
+       rrf=0.0294 | D=3 | B=14
+       category: 일품 | method: 삶기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['간식', '메인요리']
+       taste_tags:             ['달콤한', '담백한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['아이식', '가벼운한끼', '비오는날']
+       summary: 멜론과 브로콜리, 감자를 삶아 부드럽게 갈아낸 가벼운 이유식입니다.
+
+Rank 4 | recipe_id=782 | 고구마 타락죽
+       rrf=0.0290 | D=8 | B=10
+       category: 일품 | method: 끓이기 | cooking_time: 35분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '밥요리']
+       taste_tags:             ['담백한', '고소한']
+       texture_tags:           ['부드러운', '국물있는', '촉촉한']
+       recommended_situations: ['가벼운한끼', '어르신식', '아이식']
+       summary: 고구마와 현미를 끓여 저지방우유로 부드럽게 만든 담백한 죽 요리입니다.
+
+Rank 5 | recipe_id=397 | 호박죽
+       rrf=0.0284 | D=13 | B=8
+       category: 일품 | method: 끓이기 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['밥요리', '국물요리']
+       taste_tags:             ['담백한', '고소한']
+       texture_tags:           ['부드러운', '국물있는', '촉촉한']
+       recommended_situations: ['아이식', '어르신식', '가벼운한끼']
+       summary: 단호박과 찹쌀을 끓여 부드럽고 담백한 호박죽 요리입니다.
+
+════════════════════════════════════════════════════════════
+[q08 / 영양] 고단백 닭가슴살 요리
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=618 | 닭가슴살 스테이크
+       rrf=0.0320 | D=1 | B=4
+       category: 일품 | method: 굽기 | cooking_time: 35분 | difficulty: 보통
+       dish_type_tags:         ['메인요리']
+       taste_tags:             ['담백한', '고소한']
+       texture_tags:           ['촉촉한', '부드러운']
+       recommended_situations: ['다이어트', '든든한한끼']
+       summary: 닭가슴살과 토마토, 가지를 구워 만든 담백한 스테이크 요리입니다.
+
+Rank 2 | recipe_id=322 | 한식풍닭가슴살스테이크
+       rrf=0.0309 | D=9 | B=1
+       category: 일품 | method: 굽기 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['메인요리', '밥요리']
+       taste_tags:             ['담백한', '고소한']
+       texture_tags:           ['촉촉한', '부드러운']
+       recommended_situations: ['손님상', '든든한한끼']
+       summary: 닭가슴살과 밥을 말아 오븐에 구워 담백한 한식풍 닭가슴살 스테이크입니다.
+
+Rank 3 | recipe_id=402 | 닭가슴살스튜
+       rrf=0.0308 | D=3 | B=7
+       category: 일품 | method: 끓이기 | cooking_time: 35분 | difficulty: 보통
+       dish_type_tags:         ['메인요리', '국물요리']
+       taste_tags:             ['담백한', '새콤한']
+       texture_tags:           ['국물있는', '부드러운']
+       recommended_situations: ['다이어트', '가벼운한끼']
+       summary: 닭가슴살과 토마토를 끓여 만든 담백한 단백질 스튜 요리입니다.
+
+Rank 4 | recipe_id=3284 | 닭가슴살 채소쌈
+       rrf=0.0308 | D=7 | B=3
+       category: 일품 | method: 볶기 | cooking_time: 60분 | difficulty: 어려움
+       dish_type_tags:         ['메인요리']
+       taste_tags:             ['담백한', '고소한']
+       texture_tags:           ['바삭한', '촉촉한']
+       recommended_situations: ['혼밥', '가벼운한끼']
+       summary: 닭가슴살과 단호박을 볶아 만든 담백한 채소 쌈 요리입니다.
+
+Rank 5 | recipe_id=242 | 닭가슴살말이
+       rrf=0.0308 | D=5 | B=5
+       category: 반찬 | method: 찌기 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['메인요리', '반찬']
+       taste_tags:             ['담백한', '고소한', '깔끔한']
+       texture_tags:           ['부드러운', '촉촉한']
+       recommended_situations: ['다이어트', '가벼운한끼']
+       summary: 닭가슴살과 시금치, 당근을 말아 쪄낸 담백한 단백질 찜 요리입니다.
+
+════════════════════════════════════════════════════════════
+[q09 / 부정조건] 안 매운 국물 요리
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=2967 | 소고기 무국
+       rrf=0.0279 | D=27 | B=1
+       category: 국&찌개 | method: 끓이기 | cooking_time: 25분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['담백한', '깔끔한']
+       texture_tags:           ['국물있는', '아삭한']
+       recommended_situations: ['해장', '든든한한끼']
+       summary: 소고기와 무를 끓여 만든 담백한 국물 요리입니다.
+
+Rank 2 | recipe_id=975 | 알록달록 시금치 당근 수제비
+       rrf=0.0265 | D=3 | B=34
+       category: 국&찌개 | method: 끓이기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['담백한', '깔끔한']
+       texture_tags:           ['부드러운', '국물있는']
+       recommended_situations: ['가벼운한끼', '어르신식']
+       summary: 시금치와 당근 반죽으로 만든 알록달록한 담백한 수제비 국물 요리입니다.
+
+Rank 3 | recipe_id=677 | 민어매운탕
+       rrf=0.0264 | D=2 | B=37
+       category: 국&찌개 | method: 끓이기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['얼큰한', '깔끔한']
+       texture_tags:           ['국물있는', '부드러운']
+       recommended_situations: ['해장', '든든한한끼']
+       summary: 민어와 무, 버섯을 끓여낸 얼큰하고 개운한 국물 요리입니다.
+
+Rank 4 | recipe_id=376 | 베이컨밀푀유
+       rrf=0.0258 | D=18 | B=17
+       category: 국&찌개 | method: 끓이기 | cooking_time: 20분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['담백한', '고소한']
+       texture_tags:           ['국물있는', '촉촉한', '쫄깃한']
+       recommended_situations: ['손님상', '가벼운한끼']
+       summary: 알배추와 베이컨을 겹겹이 쌓아 육수에 끓여낸 담백한 국물 요리입니다.
+
+Rank 5 | recipe_id=311 | 토마토라면
+       rrf=0.0258 | D=24 | B=12
+       category: 국&찌개 | method: 끓이기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '면요리']
+       taste_tags:             ['새콤한', '시원한']
+       texture_tags:           ['국물있는', '쫄깃한']
+       recommended_situations: ['혼밥', '야식', '든든한한끼']
+       summary: 토마토와 라면을 끓여 만든 상큼하고 개운한 국물 요리입니다.
+
+════════════════════════════════════════════════════════════
+[q10 / 키워드정확] 김치찌개 레시피
+════════════════════════════════════════════════════════════
+Rank 1 | recipe_id=272 | 완자김치찌개
+       rrf=0.0325 | D=2 | B=1
+       category: 국&찌개 | method: 끓이기 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['얼큰한', '담백한']
+       texture_tags:           ['국물있는', '부드러운']
+       recommended_situations: ['든든한한끼', '해장']
+       summary: 돼지고기 완자와 김치, 두부를 끓여낸 얼큰하고 담백한 찌개 요리입니다.
+
+Rank 2 | recipe_id=271 | 닭고기김치찌개
+       rrf=0.0323 | D=1 | B=3
+       category: 국&찌개 | method: 끓이기 | cooking_time: 35분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['얼큰한', '진한']
+       texture_tags:           ['국물있는', '부드러운']
+       recommended_situations: ['든든한한끼', '해장']
+       summary: 김치와 닭가슴살, 두부를 끓여 만든 얼큰하고 개운한 국물 요리입니다.
+
+Rank 3 | recipe_id=275 | 해물김치찌개
+       rrf=0.0318 | D=4 | B=2
+       category: 국&찌개 | method: 끓이기 | cooking_time: 35분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['얼큰한', '시원한']
+       texture_tags:           ['국물있는', '쫄깃한']
+       recommended_situations: ['든든한한끼', '해장']
+       summary: 주꾸미와 김치를 끓여 칼칼하고 시원한 국물 찌개입니다.
+
+Rank 4 | recipe_id=274 | 오징어김치찌개
+       rrf=0.0315 | D=3 | B=4
+       category: 국&찌개 | method: 끓이기 | cooking_time: 30분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['얼큰한', '진한']
+       texture_tags:           ['국물있는', '쫄깃한']
+       recommended_situations: ['든든한한끼', '해장']
+       summary: 오징어와 김치, 두부를 끓여 만든 얼큰하고 감칠맛 나는 국물 요리입니다.
+
+Rank 5 | recipe_id=270 | 해물토마토김치찌개
+       rrf=0.0303 | D=7 | B=5
+       category: 국&찌개 | method: 끓이기 | cooking_time: 40분 | difficulty: 보통
+       dish_type_tags:         ['국물요리', '메인요리']
+       taste_tags:             ['시원한', '깔끔한']
+       texture_tags:           ['국물있는', '부드러운']
+       recommended_situations: ['든든한한끼', '해장']
+       summary: 김치와 토마토, 해산물을 끓여 시원하고 감칠맛 나는 국물 요리입니다.
