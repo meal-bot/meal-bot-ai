@@ -7,3 +7,6 @@ sentence-transformers
 tqdm>=4.66.0
 rank-bm25
 kiwipiepy
+fastapi
+uvicorn[standard]
+httpx

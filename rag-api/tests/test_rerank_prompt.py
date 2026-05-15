@@ -4,10 +4,28 @@ structured_inputs 확장이 정확히 user prompt에 들어가는지만 검증.
 LLM 호출은 검증 대상 아님.
 """
 
-from rag.rerank_prompt import build_user_prompt
+from rag.rerank_prompt import RerankItem, RerankResponse, build_user_prompt
 
 
 CONSTRAINT_HEADER = "[사용자 제약]"
+
+
+# ── 스키마 sanity ──────────────────────────────────────────────────────────
+
+def test_rerank_response_is_fallback_default_false():
+    """RerankResponse의 is_fallback 기본값은 False."""
+    resp = RerankResponse(
+        recommendations=[
+            RerankItem(
+                rank=1,
+                recipe_id="1",
+                reason="더미",
+                matched_intents=["담백한맛"],
+            )
+        ],
+        insufficient_matches=False,
+    )
+    assert resp.is_fallback is False
 
 
 # ── 빈/없는 structured_inputs ──────────────────────────────────────────────

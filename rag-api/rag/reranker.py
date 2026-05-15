@@ -124,6 +124,7 @@ def _build_fallback_response(candidates: list[dict], top_k: int) -> RerankRespon
     return RerankResponse(
         recommendations=items,
         insufficient_matches=len(items) < top_k,
+        is_fallback=True,
     )
 
 

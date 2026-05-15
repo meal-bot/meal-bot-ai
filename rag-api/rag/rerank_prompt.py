@@ -41,10 +41,12 @@ class RerankResponse(BaseModel):
 
     - 조건 부합 후보가 5개 미만일 수 있으므로 recommendations에 min_length를 두지 않는다.
     - 부족하게 반환할 때는 insufficient_matches=True로 표시한다.
+    - LLM 호출/검증 실패 후 hybrid 순위로 대체했을 때는 is_fallback=True로 표시한다.
     """
 
     recommendations: list[RerankItem] = Field(max_length=5)
     insufficient_matches: bool
+    is_fallback: bool = False
 
 
 # ── 시스템 프롬프트 ───────────────────────────────────────────────────────────

@@ -84,6 +84,7 @@ def _build_fallback_response() -> QAResponse:
         answer=_FALLBACK_ANSWER,
         used_fields=[],
         refused=False,
+        out_of_scope=False,
         qa_failed=True,
         is_fallback=True,
     )
@@ -109,6 +110,9 @@ def _validate_response(response: QAResponse | None) -> tuple[bool, list[str]]:
 
     if not isinstance(response.refused, bool):
         errors.append("refused가 bool이 아님")
+
+    if not isinstance(response.out_of_scope, bool):
+        errors.append("out_of_scope가 bool이 아님")
 
     return (len(errors) == 0, errors)
 
@@ -198,6 +202,7 @@ async def answer(
             answer=_EMPTY_DOCS_ANSWER,
             used_fields=[],
             refused=False,
+            out_of_scope=False,
             qa_failed=False,
             is_fallback=False,
         )
@@ -213,6 +218,7 @@ async def answer(
             "answer":              final.answer,
             "used_fields":         final.used_fields,
             "refused":             final.refused,
+            "out_of_scope":        final.out_of_scope,
             "qa_failed":           final.qa_failed,
             "is_fallback":         final.is_fallback,
             "skip_reason":         "empty_docs",
@@ -270,6 +276,7 @@ async def answer(
             answer=parsed.answer,
             used_fields=list(parsed.used_fields),
             refused=bool(parsed.refused),
+            out_of_scope=bool(parsed.out_of_scope),
             qa_failed=False,
             is_fallback=False,
         )
@@ -288,6 +295,7 @@ async def answer(
         "answer":              final.answer,
         "used_fields":         final.used_fields,
         "refused":             final.refused,
+        "out_of_scope":        final.out_of_scope,
         "qa_failed":           final.qa_failed,
         "is_fallback":         final.is_fallback,
     }
