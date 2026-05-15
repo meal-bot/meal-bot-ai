@@ -289,11 +289,16 @@ async def _call_llm(system_prompt: str, user_prompt: str) -> RerankResponse:
 # ── 메인 엔트리 ───────────────────────────────────────────────────────────────
 
 async def rerank(
-    query: str,
-    candidates: list[dict],
-    top_k: int = RERANK_TOP_K_OUTPUT,
+    query:             str,
+    candidates:        list[dict],
+    structured_inputs: dict | None = None,
+    top_k:             int         = RERANK_TOP_K_OUTPUT,
 ) -> RerankResponse:
-    """LLM rerank 메인. 후보 부족 / 호출 실패 / validation 실패 시 fallback 처리."""
+    """LLM rerank 메인. 후보 부족 / 호출 실패 / validation 실패 시 fallback 처리.
+
+    structured_inputs는 user prompt 상단 [사용자 제약] 블록으로만 노출되며,
+    rerank 로직 / validation / fallback 정책에는 영향을 주지 않는다.
+    """
     start_ts = time.perf_counter()
 
     retry_count       = 0
@@ -309,6 +314,7 @@ async def rerank(
         _log_to_jsonl({
             "ts":                 datetime.now().isoformat(),
             "query":              query,
+            "structured_inputs":  structured_inputs,
             "hybrid_top30_ids":   [],
             "llm_raw_response":   None,
             "validation_errors":  [],
@@ -334,6 +340,7 @@ async def rerank(
         _log_to_jsonl({
             "ts":                 datetime.now().isoformat(),
             "query":              query,
+            "structured_inputs":  structured_inputs,
             "hybrid_top30_ids":   hybrid_ids,
             "llm_raw_response":   None,
             "validation_errors":  [],
@@ -347,8 +354,10 @@ async def rerank(
         _log_summary(query, latency_ms, 0, False)
         return final
 
-    # 4. 유저 프롬프트 빌드
-    user_prompt_base = build_user_prompt(query, prompt_candidates)
+    # 4. 유저 프롬프트 빌드 (structured_inputs는 [사용자 제약] 블록으로만 노출)
+    user_prompt_base = build_user_prompt(
+        query, prompt_candidates, structured_inputs,
+    )
 
     # 5. LLM 호출 (1차 + 최대 RERANK_RETRY_LIMIT 회 재시도)
     parsed: RerankResponse | None = None
@@ -405,6 +414,7 @@ async def rerank(
     _log_to_jsonl({
         "ts":                 datetime.now().isoformat(),
         "query":              query,
+        "structured_inputs":  structured_inputs,
         "hybrid_top30_ids":   hybrid_ids,
         "llm_raw_response":   llm_raw_response,
         "validation_errors":  validation_errors,
