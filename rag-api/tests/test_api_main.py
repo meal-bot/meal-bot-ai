@@ -42,7 +42,7 @@ def make_recipe(rid: str, name: str | None = None) -> dict:
         "img_main": "http://example.com/main.png",
         "img_thumb": "http://example.com/thumb.png",
         "cooking_time": 20,
-        "nutrition": {"kcal": 220.0, "protein_g": 14.0},
+        "nutrition": {"energy_kcal": 220.0, "protein_g": 14.0},
     }
 
 

@@ -163,7 +163,7 @@ async def recommend(req: RecommendRequest, request: Request):
         kcal_value: float | None = None
         nutrition = recipe.get("nutrition")
         if isinstance(nutrition, dict):
-            kcal_raw = nutrition.get("kcal")
+            kcal_raw = nutrition.get("energy_kcal")
             if kcal_raw is not None:
                 try:
                     kcal_value = float(kcal_raw)
