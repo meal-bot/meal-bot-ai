@@ -45,7 +45,7 @@ class RecommendResponse(BaseModel):
     turn_id: str
     recommendations: list[Recommendation]
     insufficient_matches: bool
-    is_fallback: bool = False
+    is_fallback: bool
 
 
 class AskRequest(BaseModel):
@@ -65,7 +65,7 @@ class AskResponse(BaseModel):
     answer: str
     used_fields: list[str] = Field(default_factory=list)
     refused: bool
-    out_of_scope: bool = False
+    out_of_scope: bool
     qa_failed: bool
     is_fallback: bool
 

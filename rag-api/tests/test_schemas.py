@@ -100,22 +100,23 @@ def test_ask_response_fallback():
         refused=False,
         qa_failed=True,
         is_fallback=True,
+        out_of_scope=False,
     )
     assert resp.is_fallback is True
     assert resp.qa_failed is True
 
 
-def test_ask_response_default_out_of_scope():
-    """out_of_scope 미지정 시 기본값 False."""
-    resp = AskResponse(
-        turn_id="t1",
-        answer="재료는 연두부, 새우, 달걀입니다.",
-        used_fields=[],
-        refused=False,
-        qa_failed=False,
-        is_fallback=False,
-    )
-    assert resp.out_of_scope is False
+def test_ask_response_out_of_scope_required():
+    """out_of_scope 미지정 시 ValidationError 발생 (required 필드)."""
+    with pytest.raises(ValidationError):
+        AskResponse(
+            turn_id="t1",
+            answer="재료는 연두부, 새우, 달걀입니다.",
+            used_fields=[],
+            refused=False,
+            qa_failed=False,
+            is_fallback=False,
+        )
 
 
 def test_health_response():
