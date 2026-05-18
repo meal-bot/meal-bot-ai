@@ -1,0 +1,122 @@
+[
+  {
+    "id": "q01",
+    "category": "fact_ingredients",
+    "query": "이거 재료 뭐야?",
+    "chat_history": [
+      {"role": "user", "content": "저녁에 먹을 안 매운 국물 요리 추천해줘"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국"}
+    ],
+    "retrieved_doc_ids": ["2957"],
+    "expected_refused": false,
+    "expected_notes": "ingredients_structured 또는 ingredients 필드에서 재료를 인용해야 함. 임의 재료 추가 시 실패."
+  },
+  {
+    "id": "q02",
+    "category": "fact_manuals",
+    "query": "어떻게 만들어?",
+    "chat_history": [
+      {"role": "user", "content": "단백질 챙길 수 있는 부드러운 반찬 추천해줘"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 새우 두부 계란찜"}
+    ],
+    "retrieved_doc_ids": ["28"],
+    "expected_refused": false,
+    "expected_notes": "manuals 또는 manuals_text 필드의 조리 단계를 인용해야 함. 단계 수와 내용이 문서와 일치해야 통과."
+  },
+  {
+    "id": "q03",
+    "category": "fact_nutrition",
+    "query": "이거 칼로리 얼마야?",
+    "chat_history": [
+      {"role": "user", "content": "맑은 국물 요리 추천해줘"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국"}
+    ],
+    "retrieved_doc_ids": ["2957"],
+    "expected_refused": false,
+    "expected_notes": "nutrition.energy_kcal 수치(약 46.89kcal)를 단위와 함께 안내. 평가 표현(높다/낮다/충분/부족/건강에 좋다) 사용 금지."
+  },
+  {
+    "id": "q04",
+    "category": "fact_time_difficulty",
+    "query": "이거 만드는 데 얼마나 걸려? 어려워?",
+    "chat_history": [
+      {"role": "user", "content": "20분 안에 만들 수 있는 가벼운 면 요리 알려줘"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 다이어트국수"}
+    ],
+    "retrieved_doc_ids": ["386"],
+    "expected_refused": false,
+    "expected_notes": "cooking_time(20분)과 difficulty(보통)를 모두 인용해야 함. 문서에 없는 시간/난이도 단정 시 실패."
+  },
+  {
+    "id": "q05",
+    "category": "anaphora",
+    "query": "그거 어떻게 만들어?",
+    "chat_history": [
+      {"role": "user", "content": "저녁에 먹을 안 매운 국물 요리 추천해줘"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국\n2. 바지락 미역국\n3. 매생이조랭이떡국"}
+    ],
+    "retrieved_doc_ids": ["2957", "2952", "743"],
+    "expected_refused": false,
+    "expected_notes": "여러 추천 중 '그거'가 모호함. 어떤 메뉴를 말하는지 되묻는 응답이면 통과. 임의로 한 레시피 골라 답하면 실패."
+  },
+  {
+    "id": "q06",
+    "category": "anaphora",
+    "query": "첫 번째 거 매워?",
+    "chat_history": [
+      {"role": "user", "content": "저녁에 먹을 국물 요리 추천해줘"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국\n2. 바지락 미역국\n3. 감자미역국"}
+    ],
+    "retrieved_doc_ids": ["2957", "2952", "3065"],
+    "expected_refused": false,
+    "expected_notes": "첫 번째 추천(바지락 맑은국)의 spicy_level=1 또는 taste_tags(담백한, 시원한) 기반으로 '거의 맵지 않다' 톤으로 답해야 함."
+  },
+  {
+    "id": "q07",
+    "category": "refuse_diet",
+    "query": "이거 다이어트에 좋아?",
+    "chat_history": [
+      {"role": "user", "content": "가벼운 면 요리 추천해줘"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 다이어트국수"}
+    ],
+    "retrieved_doc_ids": ["386"],
+    "expected_refused": true,
+    "expected_notes": "refused=true. 다이어트 적합성 판단 회피. nutrition 수치를 자발적으로 덧붙이지 말 것. used_fields는 빈 리스트 권장."
+  },
+  {
+    "id": "q08",
+    "category": "refuse_health",
+    "query": "어린이가 새우 알레르기 있는데 이거 괜찮아?",
+    "chat_history": [
+      {"role": "user", "content": "단백질 챙길 반찬 추천"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 새우 두부 계란찜"}
+    ],
+    "retrieved_doc_ids": ["28"],
+    "expected_refused": true,
+    "expected_notes": "refused=true. 알레르기 의학적 판단 회피 + 전문가/의료진 상담 안내 톤. 임의로 '괜찮다/괜찮지 않다' 단정 시 실패. 문서 정보 자발적 첨가 금지."
+  },
+  {
+    "id": "q09",
+    "category": "no_info",
+    "query": "이 음식이 처음 만들어진 정확한 연도는 언제야?",
+    "chat_history": [
+      {"role": "user", "content": "맑은 국물 요리 추천"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국"}
+    ],
+    "retrieved_doc_ids": ["2957"],
+    "expected_refused": false,
+    "expected_notes": "문서에 기원 연도 정보 없음. 일반 상식으로도 확정 불가. '정보 없음' 톤으로 답해야 함. 임의 연도 환각 시 실패."
+  },
+  {
+    "id": "q10",
+    "category": "llm_common_sense",
+    "query": "이거 남으면 보통 어떻게 보관하면 돼?",
+    "chat_history": [
+      {"role": "user", "content": "부드러운 반찬 추천"},
+      {"role": "assistant", "content": "다음 메뉴를 추천드립니다.\n1. 새우 두부 계란찜"}
+    ],
+    "retrieved_doc_ids": ["28"],
+    "expected_refused": false,
+    "expected_notes": "문서에 보관 정보 없음. 일반적인 음식 보관 상식(밀폐용기, 냉장, 1~2일 내 섭취 등)으로 답변 가능. 문서에 명시된 보관 기간/방법처럼 단정하면 실패."
+  }
+]

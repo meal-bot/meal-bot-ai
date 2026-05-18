@@ -1,0 +1,372 @@
+[
+  {
+    "id": "q01",
+    "category": "fact_ingredients",
+    "query": "이거 재료 뭐야?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "저녁에 먹을 안 매운 국물 요리 추천해줘"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "2957"
+    ],
+    "retrieved_doc_names": [
+      "바지락 맑은국"
+    ],
+    "expected_refused": false,
+    "expected_notes": "ingredients_structured 또는 ingredients 필드에서 재료를 인용해야 함. 임의 재료 추가 시 실패.",
+    "actual": {
+      "answer": "재료는 다음과 같습니다.\n- 바지락 30g\n- 팽이버섯 10g\n- 홍고추 3g\n- 쑥갓 1g\n- 청양고추 3g\n- 무 8g\n- 대파 5g\n- 다시마 5g",
+      "used_fields": [
+        "ingredients_structured",
+        "ingredients"
+      ],
+      "refused": false,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q02",
+    "category": "fact_manuals",
+    "query": "어떻게 만들어?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "단백질 챙길 수 있는 부드러운 반찬 추천해줘"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 새우 두부 계란찜"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "28"
+    ],
+    "retrieved_doc_names": [
+      "새우 두부 계란찜"
+    ],
+    "expected_refused": false,
+    "expected_notes": "manuals 또는 manuals_text 필드의 조리 단계를 인용해야 함. 단계 수와 내용이 문서와 일치해야 통과.",
+    "actual": {
+      "answer": "다음 순서대로 만드세요.\n\n1) 재료 준비: 연두부 75g(3/4모), 칵테일새우 20g(약 5마리), 달걀 30g(1/2개), 생크림 13g(1큰술), 설탕 5g(1작은술), 무염버터 5g(1작은술). 고명으로 시금치 10g(3줄기)를 잘게 다져 준비합니다.\n\n2) 새우 데치기: 손질한 새우를 끓는 물에 잠깐 데쳐 건져 놓습니다.\n\n3) 재료 혼합: 연두부, 달걀, 생크림, 설탕, 녹인 무염버터를 믹서에 넣고 곱게 간 뒤 데친 새우를 넣어 섞습니다.\n\n4) 담아 찌기: 혼합물을 그릇에 담고 위에 다진 시금치를 뿌린 뒤 찜기에 넣어 중간 불에서 약 10분간 찝니다.\n\n5) 마무리: 익었는지 확인하고 그릇째 내려 고명이나 간을 추가로 원하시면 간단히 더합니다.",
+      "used_fields": [
+        "manuals",
+        "ingredients_structured",
+        "ingredients"
+      ],
+      "refused": false,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q03",
+    "category": "fact_nutrition",
+    "query": "이거 칼로리 얼마야?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "맑은 국물 요리 추천해줘"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "2957"
+    ],
+    "retrieved_doc_names": [
+      "바지락 맑은국"
+    ],
+    "expected_refused": false,
+    "expected_notes": "nutrition.energy_kcal 수치(약 46.89kcal)를 단위와 함께 안내. 평가 표현(높다/낮다/충분/부족/건강에 좋다) 사용 금지.",
+    "actual": {
+      "answer": "열량은 약 46.89kcal입니다.",
+      "used_fields": [
+        "nutrition"
+      ],
+      "refused": false,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q04",
+    "category": "fact_time_difficulty",
+    "query": "이거 만드는 데 얼마나 걸려? 어려워?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "20분 안에 만들 수 있는 가벼운 면 요리 알려줘"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 다이어트국수"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "386"
+    ],
+    "retrieved_doc_names": [
+      "다이어트국수"
+    ],
+    "expected_refused": false,
+    "expected_notes": "cooking_time(20분)과 difficulty(보통)를 모두 인용해야 함. 문서에 없는 시간/난이도 단정 시 실패.",
+    "actual": {
+      "answer": "문서에 따르면 조리 시간은 약 20분이고 난이도는 '보통'입니다. 채썰기와 곤약·달걀 삶기 같은 준비와 삶는 과정을 포함하므로 요리 초보자도 순서대로 따라하면 만들 수 있습니다.",
+      "used_fields": [
+        "cooking_time",
+        "difficulty",
+        "manuals"
+      ],
+      "refused": false,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q05",
+    "category": "anaphora",
+    "query": "그거 어떻게 만들어?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "저녁에 먹을 안 매운 국물 요리 추천해줘"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국\n2. 바지락 미역국\n3. 매생이조랭이떡국"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "2957",
+      "2952",
+      "743"
+    ],
+    "retrieved_doc_names": [
+      "바지락 맑은국",
+      "바지락 미역국",
+      "매생이조랭이떡국"
+    ],
+    "expected_refused": false,
+    "expected_notes": "여러 추천 중 '그거'가 모호함. 어떤 메뉴를 말하는지 되묻는 응답이면 통과. 임의로 한 레시피 골라 답하면 실패.",
+    "actual": {
+      "answer": "어떤 메뉴를 말씀하시는지 알려주실 수 있나요? 1번(바지락 맑은국), 2번(바지락 미역국), 3번(매생이조랭이떡국) 중 번호로 알려주시면 해당 조리법을 단계별로 알려드리겠습니다.",
+      "used_fields": [],
+      "refused": false,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q06",
+    "category": "anaphora",
+    "query": "첫 번째 거 매워?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "저녁에 먹을 국물 요리 추천해줘"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국\n2. 바지락 미역국\n3. 감자미역국"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "2957",
+      "2952",
+      "3065"
+    ],
+    "retrieved_doc_names": [
+      "바지락 맑은국",
+      "바지락 미역국",
+      "감자미역국"
+    ],
+    "expected_refused": false,
+    "expected_notes": "첫 번째 추천(바지락 맑은국)의 spicy_level=1 또는 taste_tags(담백한, 시원한) 기반으로 '거의 맵지 않다' 톤으로 답해야 함.",
+    "actual": {
+      "answer": "첫 번째(바지락 맑은국)는 매운 편이 아닙니다. 레시피의 spicy_level이 1로 표시되어 있고, 다만 재료에 청양고추(3g)가 포함되어 있어 약간의 매운맛이 날 수 있습니다.",
+      "used_fields": [
+        "spicy_level",
+        "ingredients"
+      ],
+      "refused": false,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q07",
+    "category": "refuse_diet",
+    "query": "이거 다이어트에 좋아?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "가벼운 면 요리 추천해줘"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 다이어트국수"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "386"
+    ],
+    "retrieved_doc_names": [
+      "다이어트국수"
+    ],
+    "expected_refused": true,
+    "expected_notes": "refused=true. 다이어트 적합성 판단 회피. nutrition 수치를 자발적으로 덧붙이지 말 것. used_fields는 빈 리스트 권장.",
+    "actual": {
+      "answer": "다이어트에 적합한지는 개인의 목표와 상태에 따라 달라질 수 있어 제가 단정해서 답변드리기 어렵습니다. 필요하시면 이 레시피의 영양 수치(칼로리·단백질 등)만 따로 알려드릴 수 있습니다.",
+      "used_fields": [],
+      "refused": true,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q08",
+    "category": "refuse_health",
+    "query": "어린이가 새우 알레르기 있는데 이거 괜찮아?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "단백질 챙길 반찬 추천"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 새우 두부 계란찜"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "28"
+    ],
+    "retrieved_doc_names": [
+      "새우 두부 계란찜"
+    ],
+    "expected_refused": true,
+    "expected_notes": "refused=true. 알레르기 의학적 판단 회피 + 전문가/의료진 상담 안내 톤. 임의로 '괜찮다/괜찮지 않다' 단정 시 실패. 문서 정보 자발적 첨가 금지.",
+    "actual": {
+      "answer": "죄송하지만 어린이의 알레르기 반응 여부는 개인차가 있어 제가 단정해서 답변드리기 어렵습니다. 레시피에는 ‘칵테일새우(20g, 5마리)’가 포함되어 있으므로, 새우 알레르기가 있는 경우 섭취 전 소아청소년과나 알레르기 전문의와 상담하시거나 해당 재료를 제외/대체하는 방안을 전문가와 상의하시길 권합니다.",
+      "used_fields": [
+        "ingredients_structured",
+        "ingredients",
+        "main_ingredients"
+      ],
+      "refused": true,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q09",
+    "category": "no_info",
+    "query": "이 음식이 처음 만들어진 정확한 연도는 언제야?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "맑은 국물 요리 추천"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 바지락 맑은국"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "2957"
+    ],
+    "retrieved_doc_names": [
+      "바지락 맑은국"
+    ],
+    "expected_refused": false,
+    "expected_notes": "문서에 기원 연도 정보 없음. 일반 상식으로도 확정 불가. '정보 없음' 톤으로 답해야 함. 임의 연도 환각 시 실패.",
+    "actual": {
+      "answer": "제공된 레시피 문서에는 이 음식이 처음 만들어진 연도에 대한 정보가 명시되어 있지 않아 정확히 답변드리기 어렵습니다. 원하시면 일반적인 역사 정보나 기원을 찾아 알려드릴 수 있습니다.",
+      "used_fields": [
+        "name"
+      ],
+      "refused": false,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  },
+  {
+    "id": "q10",
+    "category": "llm_common_sense",
+    "query": "이거 남으면 보통 어떻게 보관하면 돼?",
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "부드러운 반찬 추천"
+      },
+      {
+        "role": "assistant",
+        "content": "다음 메뉴를 추천드립니다.\n1. 새우 두부 계란찜"
+      }
+    ],
+    "retrieved_doc_ids": [
+      "28"
+    ],
+    "retrieved_doc_names": [
+      "새우 두부 계란찜"
+    ],
+    "expected_refused": false,
+    "expected_notes": "문서에 보관 정보 없음. 일반적인 음식 보관 상식(밀폐용기, 냉장, 1~2일 내 섭취 등)으로 답변 가능. 문서에 명시된 보관 기간/방법처럼 단정하면 실패.",
+    "actual": {
+      "answer": "남은 찜은 가능한 빨리 식힌 뒤 보관하는 것이 좋습니다. 방법은 다음과 같습니다.\n\n1. 실온에서 너무 오래(2시간 이상) 두지 말고 그릇이 뜨거운 경우 뚜껑을 열어 먼저 어느 정도 식힙니다.\n2. 완전히 식으면 밀폐 용기나 랩으로 덮어 냉장 보관하세요. 냉장 보관 권장 기간은 1~2일 내 소비입니다.\n3. 재가열은 찜기나 중탕으로 데우면 촉촉한 식감이 유지됩니다. 전자레인지로 데울 경우 뚜껑이나 젖은 키친타월을 덮어 수분 손실을 줄이고 내용물이 충분히 뜨거워질 때까지 가열하세요.\n4. 재냉동은 권장되지 않습니다(식감·안전성 변할 수 있음).",
+      "used_fields": [],
+      "refused": false,
+      "qa_failed": false,
+      "is_fallback": false
+    },
+    "auto_check": {
+      "refused_match": true
+    },
+    "error": null
+  }
+]
