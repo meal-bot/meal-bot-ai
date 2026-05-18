@@ -93,7 +93,6 @@ def _candidate_to_prompt_dict(candidate: dict) -> dict:
         out[key] = value if isinstance(value, list) else []
 
     out["cooking_time"] = candidate.get("cooking_time")
-    out["spicy_level"]  = candidate.get("spicy_level")
     out["dense_rank"]   = candidate.get("dense_rank")
     out["bm25_rank"]    = candidate.get("bm25_rank")
     out["rrf_score"]    = candidate.get("rrf_score")
@@ -290,15 +289,21 @@ async def _call_llm(system_prompt: str, user_prompt: str) -> RerankResponse:
 # ── 메인 엔트리 ───────────────────────────────────────────────────────────────
 
 async def rerank(
-    query:             str,
-    candidates:        list[dict],
-    structured_inputs: dict | None = None,
-    top_k:             int         = RERANK_TOP_K_OUTPUT,
+    query:                 str,
+    candidates:            list[dict],
+    structured_inputs:     dict | None       = None,
+    top_k:                 int               = RERANK_TOP_K_OUTPUT,
+    previously_recommended: list[str] | None = None,
 ) -> RerankResponse:
     """LLM rerank 메인. 후보 부족 / 호출 실패 / validation 실패 시 fallback 처리.
 
     structured_inputs는 user prompt 상단 [사용자 제약] 블록으로만 노출되며,
     rerank 로직 / validation / fallback 정책에는 영향을 주지 않는다.
+
+    previously_recommended: refine 분기에서 직전 추천 메뉴명을 전달하면,
+    LLM에 "이전 추천과 다른 매력 포인트를 reason에 강조"하도록 유도하는
+    추가 블록이 user prompt 끝에 append된다. None/빈 리스트면 무시.
+    exclude 필터링에는 사용되지 않는다 (그건 retriever 책임).
     """
     start_ts = time.perf_counter()
 
@@ -357,8 +362,18 @@ async def rerank(
 
     # 4. 유저 프롬프트 빌드 (structured_inputs는 [사용자 제약] 블록으로만 노출)
     user_prompt_base = build_user_prompt(
-        query, prompt_candidates, structured_inputs,
+        query, prompt_candidates, structured_inputs, top_k=top_k,
     )
+
+    # refine 분기에서 직전 추천 메뉴명이 전달되면 차별화 유도 블록을 append.
+    if previously_recommended:
+        prev_names = ", ".join(previously_recommended)
+        user_prompt_base = (
+            f"{user_prompt_base}\n\n"
+            f"[직전 추천 메뉴]\n"
+            f"다음 메뉴들은 직전 턴에 이미 추천된 메뉴입니다: {prev_names}\n"
+            f"이번 추천에서는 이전 추천과 다른 매력 포인트를 reason에 강조하세요."
+        )
 
     # 5. LLM 호출 (1차 + 최대 RERANK_RETRY_LIMIT 회 재시도)
     parsed: RerankResponse | None = None
@@ -449,7 +464,6 @@ if __name__ == "__main__":
             "meal_time": ["아침", "저녁"],
             "purpose": ["light", "protein"],
             "cooking_time": 20,
-            "spicy_level": 1,
             "difficulty": "쉬움",
             "taste_tags": ["담백한"],
             "texture_tags": ["부드러운"],
@@ -469,7 +483,6 @@ if __name__ == "__main__":
             "meal_time": ["아침"],
             "purpose": ["light"],
             "cooking_time": 25,
-            "spicy_level": 1,
             "difficulty": "쉬움",
             "taste_tags": ["담백한", "시원한"],
             "texture_tags": ["부드러운"],

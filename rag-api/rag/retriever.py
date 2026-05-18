@@ -139,7 +139,12 @@ class HybridRetriever:
         self.dense = dense
         self.bm25 = bm25
 
-    def search(self, query: str, top_k: int | None = None) -> list[Hit]:
+    def search(
+        self,
+        query: str,
+        top_k: int | None = None,
+        exclude_ids: list[str] | None = None,
+    ) -> list[Hit]:
         if not query or not query.strip():
             return []
 
@@ -149,7 +154,26 @@ class HybridRetriever:
         dense_hits = self.dense.search(query, top_k=DENSE_TOP_K)
         bm25_hits  = self.bm25.search(query, top_k=BM25_TOP_K)
 
-        return self._rrf_merge(dense_hits, bm25_hits, top_k)
+        hits = self._rrf_merge(dense_hits, bm25_hits, top_k)
+
+        if not exclude_ids:
+            return hits
+
+        # 정규화: "recipe_42" / "42" / " 42 " 모두 "42"로 비교.
+        exclude_set = {
+            str(rid).strip().removeprefix("recipe_").strip()
+            for rid in exclude_ids
+        }
+
+        filtered: list[Hit] = []
+        for hit in hits:
+            rid_norm = str(hit.recipe_id).strip().removeprefix("recipe_").strip()
+            if rid_norm in exclude_set:
+                continue
+            hit.rank = len(filtered) + 1
+            filtered.append(hit)
+
+        return filtered
 
     def _rrf_merge(
         self,
