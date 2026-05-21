@@ -59,11 +59,16 @@ class Recommendation(BaseModel):
 
 
 class Flags(BaseModel):
-    """응답 플래그. 3개 필드 모두 required. 결합 규칙은 orchestrator-v0.3.md 참조."""
+    """응답 플래그. 결합 규칙은 orchestrator-v0.3.md 참조.
+
+    refused는 기존 응답과의 호환을 위해 default=False 옵션 필드로 둔다.
+    QA 거부 응답을 클라이언트가 식별할 수 있도록 P0 패치로 추가됨.
+    """
 
     needs_more_slots: bool
     out_of_scope: bool
     is_fallback: bool
+    refused: bool = False
 
 
 class ChatRequest(BaseModel):
