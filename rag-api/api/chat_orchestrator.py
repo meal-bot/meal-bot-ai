@@ -31,6 +31,7 @@ from api.qa_handler import handle_ask
 from api.recommend import handle_recommend
 from api.refine import handle_refine
 from api.schemas import (
+    ChatMessage,
     ChatRequest,
     ChatResponse,
     Flags,
@@ -55,6 +56,74 @@ ANSWER_ASK_NO_LAST_REC = (
     "먼저 추천받은 메뉴가 있어야 해당 메뉴에 대해 답변드릴 수 있어요. "
     "어떤 메뉴를 추천해 드릴까요?"
 )
+
+# free_text 슬롯 안전망용 상수
+SAFETYNET_SIGNATURE = "더 알려주실 정보"
+
+FREETEXT_SAFETYNET_QUESTION = (
+    "마지막으로, 더 알려주실 정보가 있으세요? "
+    "(없으면 '없음'이나 '패스'라고 답해주세요)"
+)
+
+# 안전망 응답에서 free_text를 null로 정규화할 부정 응답 집합
+# (모두 strip + lower + 끝 문장부호 제거 후 비교)
+NEGATIVE_ANSWERS: frozenset[str] = frozenset({
+    # 명시적
+    "없음", "없어", "없어요", "없습니다", "없는데",
+    # 패스 류
+    "패스", "pass", "스킵", "skip", "통과",
+    # 단답
+    "x", "-", "ㄴ",
+    # 거부
+    "괜찮아", "괜찮아요", "아니", "아니요", "no",
+    # 위임
+    "그냥", "그냥 추천", "알아서", "아무거나", "다 좋아",
+    # 모름
+    "몰라", "모르겠어", "모르겠어요",
+    # 무의미 단답
+    "응", "네", "ㅇㅇ", "ㅇ",
+})
+
+
+# ── free_text 안전망 헬퍼 ──────────────────────────────────────────────────
+
+def _needs_freetext_safetynet(slots: Slots, free_text_delta: str | None) -> bool:
+    """안전망 발동 여부. slots.free_text와 delta 모두 strip 후 3자 미만이면 True."""
+    def _too_short(s: str | None) -> bool:
+        return s is None or len(s.strip()) < 3
+
+    return _too_short(slots.free_text) and _too_short(free_text_delta)
+
+
+def _was_freetext_safetynet_asked(history: list[ChatMessage]) -> bool:
+    """직전 assistant 메시지가 안전망 질문이었는지.
+    시그니처 부분 문자열 매칭(문구 미세조정에 강건).
+    """
+    if not history:
+        return False
+    last = history[-1]
+    if getattr(last, "role", None) != "assistant":
+        return False
+    return SAFETYNET_SIGNATURE in getattr(last, "content", "")
+
+
+def _normalize_freetext_negative(
+    slots: Slots,
+    message: str,
+    free_text_delta: str | None,
+) -> tuple[Slots, str | None]:
+    """안전망 응답이 부정형이면 free_text를 null로 정규화."""
+    normalized = message.strip().lower().rstrip(".?!~。…")
+    if normalized in NEGATIVE_ANSWERS:
+        return (
+            Slots(
+                meal_times=slots.meal_times,
+                purpose=slots.purpose,
+                free_text=None,
+            ),
+            None,
+        )
+    return slots, free_text_delta
 
 
 class ChatOrchestrator:
@@ -147,8 +216,12 @@ class ChatOrchestrator:
             slot_extract_failed = True
         timings["slot_ms"] = int((time.perf_counter() - t1) * 1000)
 
-        # 6. merge_slots (delta가 있을 때만)
-        if delta is not None:
+        # 6. merge_slots: 추천 슬롯에 영향을 주는 intent에서만 적용.
+        # ask는 현재 추천 메뉴에 대한 질문이므로 slot extractor가 발화에서 뽑은
+        # meal_times/purpose delta를 다음 추천 조건으로 저장하면 슬롯이 오염된다.
+        # 예: "다이어트에 좋아?" → purpose="light"로 잘못 누적되어 다음 refine 결과를 흔듦.
+        # out_of_scope는 단계 3에서 이미 반환되지만 방어적으로 화이트리스트에 포함.
+        if delta is not None and effective_intent in {"recommend", "refine", "slot_fill"}:
             slots = self._merge_slots(slots, delta)
 
         free_text_delta = delta.free_text_delta if delta is not None else None
@@ -210,8 +283,31 @@ class ChatOrchestrator:
                     initial_intent=initial_intent,
                 )
 
+            # ── free_text 안전망 ──
+            # 직전에 안전망을 물어봤으면 이번 답변을 정규화하고 recommend 진행.
+            # 안 물어봤고 free_text가 부족하면 안전망 질문을 한 번 던지고 종료.
+            if _was_freetext_safetynet_asked(history):
+                slots, free_text_delta = _normalize_freetext_negative(
+                    slots, request.message, free_text_delta
+                )
+            elif _needs_freetext_safetynet(slots, free_text_delta):
+                return self._build_response(
+                    request=request,
+                    slots=slots,
+                    handler_result=HandlerResult(
+                        intent="slot_fill",
+                        answer=FREETEXT_SAFETYNET_QUESTION,
+                        recommendations=[],
+                        flags_override={"needs_more_slots": True},
+                        timings=timings,
+                    ),
+                    t_start=t_start,
+                    initial_intent=initial_intent,
+                )
+
             result = await handle_recommend(
                 slots=slots,
+                free_text_delta=free_text_delta,
                 retriever=self.retriever,
                 recipe_store=self.recipe_store,
             )

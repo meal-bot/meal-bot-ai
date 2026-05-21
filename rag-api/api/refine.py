@@ -245,10 +245,13 @@ async def handle_refine(
         )
 
     # 5. LLM rerank (previously_recommended 전달, top_k=2)
+    # slots.free_text가 비어 있으면 이번 턴 delta로 폴백 (recommend와 동일 패턴).
+    # Spring이 누적해서 보내주면 slots.free_text 우선, 아니면 delta로라도 신호 살림.
+    effective_free_text = slots.free_text or free_text_delta
     structured_inputs = {
         "meal_times": slots.meal_times,
         "purpose": slots.purpose,
-        "free_text": slots.free_text,
+        "free_text": effective_free_text,
     }
     previously_recommended = [lr.name for lr in last_recommendations]
 

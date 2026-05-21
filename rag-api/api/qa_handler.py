@@ -118,6 +118,10 @@ async def handle_ask(
         flags_override["is_fallback"] = True
         # 응답 스키마 정책상 ask 분기에서 out_of_scope를 다시 마킹하지 않는다.
         # orchestrator가 1차 분류 단계에서만 out_of_scope 플래그를 set.
+    if qa_resp.refused:
+        # 거부 응답은 답변 텍스트가 그대로 노출되므로 클라이언트가 식별할 수 있게
+        # flags.refused로 전파. is_fallback / out_of_scope와는 독립.
+        flags_override["refused"] = True
 
     return HandlerResult(
         intent="ask",
