@@ -301,3 +301,31 @@ def handle_chat(request):
     # 응답 직전: 불변식 검증 + total_ms 포함 전체 로깅
     # (각 respond() 내부에서 수행)
 ```
+
+## free_text 안전망 단계
+
+### 발동 조건
+- effective_intent == "recommend"이고
+- 직전 assistant 메시지가 안전망 질문이 아니며 (history 마지막 메시지에 시그니처 부분 문자열 "더 알려주실 정보" 없음)
+- slots.free_text와 free_text_delta 둘 다 strip 후 3자 미만일 때
+
+### 동작
+- intent="slot_fill", recommendations=[], flags.needs_more_slots=True로 반환
+- answer는 고정 문구:
+  "마지막으로, 더 알려주실 정보가 있으세요? (없으면 '없음'이나 '패스'라고 답해주세요)"
+
+### 다음 턴 처리
+- 직전 assistant 메시지에 시그니처가 포함되어 있으면 안전망 응답으로 간주
+- 사용자 message가 NEGATIVE_ANSWERS 집합에 매칭되면 (strip + lower + 끝 문장부호 제거 후 비교):
+  - slots.free_text = None으로 강제 정규화
+  - free_text_delta = None으로 강제
+- 매칭 안 되면 extract_slots 결과(이미 merge된 slots) 그대로 사용
+
+### NEGATIVE_ANSWERS 집합
+명시적 부정/패스/단답/거부/위임/모름/무의미 단답 등. 자세한 목록은 api/chat_orchestrator.py의 `NEGATIVE_ANSWERS` 상수 참조.
+
+### refine 분기는 제외
+refine은 last_recommendations가 이미 있고 free_text_delta가 query 재구성에 직접 들어가므로 안전망 불필요.
+
+### Rerank 프롬프트와의 연결
+안전망으로 채워진 free_text는 rerank SYSTEM_PROMPT의 `[자유 요청 우선순위]` 섹션에 의해 1순위 신호로 활용된다.

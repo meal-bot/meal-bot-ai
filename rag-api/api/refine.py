@@ -177,8 +177,14 @@ async def _rebuild_query_with_llm(
 # ── answer 템플릿 ────────────────────────────────────────────────────────
 
 
-def _build_refine_answer(free_text_delta: str | None) -> str:
-    """refine 정상 응답의 answer 메시지 (템플릿 + 변수)."""
+def _build_refine_answer(free_text_delta: str | None, count: int = 2) -> str:
+    """refine 정상 응답의 answer 메시지 (템플릿 + 변수).
+
+    count는 최종 recommendations 개수. 데이터셋 한계로 1개만 잡힌 경우
+    조건이 좁다는 안내 톤으로 분기한다.
+    """
+    if count == 1:
+        return "조건이 조금 좁아서 가장 잘 맞는 메뉴 1개를 골라봤어요."
     if free_text_delta:
         return f"{free_text_delta} 반영해서 다시 골라봤어요."
     return "조건 반영해서 다시 골라봤어요."
@@ -297,11 +303,12 @@ async def handle_refine(
             len(rerank_resp.recommendations), missing_ids,
         )
 
-    # 응답 불변식: recommendations=[] OR len=2. 2개 미만이면 ask로 폴백
-    if len(recommendations) < 2:
+    # 응답 불변식: refine은 recommendations=[] OR len=1~2 허용 (ChatResponse validator 참조).
+    # 0개일 때만 ask 폴백, 1개는 정상 응답으로 통과시킨다.
+    rec_count = len(recommendations)
+    if rec_count == 0:
         logger.warning(
-            "refine: insufficient recommendations after lookup: got=%d (expected 2)",
-            len(recommendations),
+            "refine: no recommendations after lookup (expected 1~2)",
         )
         return HandlerResult(
             intent="ask",
@@ -310,9 +317,12 @@ async def handle_refine(
             flags_override={"is_fallback": True},
             timings=timings,
         )
+    if rec_count == 1:
+        # rerank가 1건만 반환한 빈도 관찰용. 데이터셋 한계 모니터링.
+        logger.info("refine: single recommendation returned (got=1)")
 
-    # 7. answer 생성
-    answer = _build_refine_answer(free_text_delta)
+    # 7. answer 생성 (1개일 때는 조건 좁다는 안내 톤으로 분기)
+    answer = _build_refine_answer(free_text_delta, count=rec_count)
 
     # 8. 정상 응답
     flags_override: dict[str, bool] = {}
