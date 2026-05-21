@@ -87,7 +87,13 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     """POST /chat 응답. intent는 응답 시점 최종 분류.
-    recommendations는 0개 또는 2개. slots_updated는 항상 전체 스냅샷."""
+    recommendations는 intent에 따라 개수가 정해진다.
+    slot_fill/ask는 0개, recommend는 정확히 2개, refine은 1~2개.
+    slots_updated는 항상 전체 슬롯 스냅샷.
+    free_text_delta는 이번 턴 AI가 추출한 자유 텍스트이며 Spring 누적용이다.
+    free_text_delta는 intent in {"recommend", "refine", "slot_fill"}일 때만 채워질 수 있고,
+    ask/out_of_scope/refused 케이스에서는 항상 null이다 (orchestrator 가드).
+    """
 
     turn_id: str = Field(min_length=1, max_length=100)
     intent: Literal["recommend", "slot_fill", "refine", "ask"]
@@ -95,6 +101,7 @@ class ChatResponse(BaseModel):
     slots_updated: Slots
     recommendations: list[Recommendation] = Field(default_factory=list, max_length=2)
     flags: Flags
+    free_text_delta: str | None = Field(default=None, max_length=500)
 
     @model_validator(mode="after")
     def _check_intent_recommendations_consistency(self) -> "ChatResponse":

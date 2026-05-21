@@ -146,6 +146,11 @@ class ChatOrchestrator:
         t_start = time.perf_counter()
         timings: dict[str, int] = {}
 
+        # 모든 _build_response 호출 경로에서 안전하게 참조될 수 있도록 명시 초기화.
+        # extract_slots 호출 전 early return(intent classify 실패 / out_of_scope) 경로에서도
+        # 변수 정의 상태가 보장된다. 이후 extract_slots 성공 시 같은 변수에 덮어쓴다.
+        free_text_delta: str | None = None
+
         # 1. 입력 정규화
         slots = request.slots or Slots()
         last_recs = list(request.last_recommendations or [])
@@ -177,6 +182,7 @@ class ChatOrchestrator:
                 ),
                 t_start=t_start,
                 initial_intent="<classify_error>",
+                free_text_delta=free_text_delta,
             )
         timings["intent_ms"] = int((time.perf_counter() - t0) * 1000)
 
@@ -196,6 +202,7 @@ class ChatOrchestrator:
                 ),
                 t_start=t_start,
                 initial_intent=initial_intent,
+                free_text_delta=free_text_delta,
             )
 
         # 4. refine + last_recs=[] → recommend로 재분류 (정상 처리)
@@ -241,6 +248,7 @@ class ChatOrchestrator:
                 ),
                 t_start=t_start,
                 initial_intent=initial_intent,
+                free_text_delta=free_text_delta,
             )
 
         # 7. intent별 핸들러 분기
@@ -263,6 +271,7 @@ class ChatOrchestrator:
                     ),
                     t_start=t_start,
                     initial_intent=initial_intent,
+                    free_text_delta=free_text_delta,
                 )
 
         if effective_intent == "recommend":
@@ -281,6 +290,7 @@ class ChatOrchestrator:
                     ),
                     t_start=t_start,
                     initial_intent=initial_intent,
+                    free_text_delta=free_text_delta,
                 )
 
             # ── free_text 안전망 ──
@@ -291,6 +301,9 @@ class ChatOrchestrator:
                     slots, request.message, free_text_delta
                 )
             elif _needs_freetext_safetynet(slots, free_text_delta):
+                # 안전망 질문 자체에서 추출된 delta가 Spring에 누적되면 안 됨.
+                # 다음 턴(사용자의 "없음"/"매운 거" 등)은 recommend 분기에서
+                # 정상 처리되므로 여기서는 명시적으로 None을 노출한다.
                 return self._build_response(
                     request=request,
                     slots=slots,
@@ -303,6 +316,7 @@ class ChatOrchestrator:
                     ),
                     t_start=t_start,
                     initial_intent=initial_intent,
+                    free_text_delta=None,
                 )
 
             result = await handle_recommend(
@@ -318,6 +332,7 @@ class ChatOrchestrator:
                 handler_result=result,
                 t_start=t_start,
                 initial_intent=initial_intent,
+                free_text_delta=free_text_delta,
                 merge_timings=True,
                 base_timings=timings,
             )
@@ -337,6 +352,7 @@ class ChatOrchestrator:
                 handler_result=result,
                 t_start=t_start,
                 initial_intent=initial_intent,
+                free_text_delta=free_text_delta,
                 merge_timings=True,
                 base_timings=timings,
             )
@@ -355,6 +371,7 @@ class ChatOrchestrator:
                     ),
                     t_start=t_start,
                     initial_intent=initial_intent,
+                    free_text_delta=free_text_delta,
                 )
 
             result = await handle_ask(
@@ -369,6 +386,7 @@ class ChatOrchestrator:
                 handler_result=result,
                 t_start=t_start,
                 initial_intent=initial_intent,
+                free_text_delta=free_text_delta,
                 merge_timings=True,
                 base_timings=timings,
             )
@@ -387,6 +405,7 @@ class ChatOrchestrator:
             ),
             t_start=t_start,
             initial_intent=initial_intent,
+            free_text_delta=free_text_delta,
         )
 
     # ── 내부 유틸 ────────────────────────────────────────────────────────
@@ -412,6 +431,10 @@ class ChatOrchestrator:
         """meal_times와 purpose가 모두 채워져 있는지 검사. free_text는 옵션."""
         return bool(slots.meal_times) and bool(slots.purpose)
 
+    # free_text_delta 노출 화이트리스트: Spring이 free_text 누적에 사용해도 되는 intent.
+    # ask/out_of_scope/refused 케이스는 항상 None으로 마스킹된다.
+    _ALLOWED_DELTA_INTENTS = frozenset({"recommend", "refine", "slot_fill"})
+
     def _build_response(
         self,
         request: ChatRequest,
@@ -419,6 +442,7 @@ class ChatOrchestrator:
         handler_result: HandlerResult,
         t_start: float,
         initial_intent: str,
+        free_text_delta: str | None = None,
         merge_timings: bool = False,
         base_timings: dict[str, int] | None = None,
     ) -> ChatResponse:
@@ -438,6 +462,19 @@ class ChatOrchestrator:
             timings.update(base_timings)
         timings.update(handler_result.timings or {})
 
+        # free_text_delta 노출 가드.
+        # Spring이 이 값을 세션 freeText에 append할 예정이므로,
+        # 추천 조건으로 누적해도 되는 최종 intent에서만 노출한다.
+        # 최종 intent 기준 (예: recommend 핸들러가 slot_fill fallback을 반환해도
+        # 그 fallback intent에 따라 판단). refused=True면 intent 무관하게 마스킹.
+        if (
+            handler_result.intent not in self._ALLOWED_DELTA_INTENTS
+            or flags.refused
+        ):
+            exposed_delta: str | None = None
+        else:
+            exposed_delta = free_text_delta
+
         # ChatResponse 조립 (스키마 model_validator가 intent ↔ recommendations 검증)
         response = ChatResponse(
             turn_id=request.turn_id,
@@ -446,6 +483,7 @@ class ChatOrchestrator:
             slots_updated=slots,
             recommendations=handler_result.recommendations,
             flags=flags,
+            free_text_delta=exposed_delta,
         )
 
         # 로깅
