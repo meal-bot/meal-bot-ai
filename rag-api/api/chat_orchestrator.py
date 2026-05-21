@@ -216,8 +216,12 @@ class ChatOrchestrator:
             slot_extract_failed = True
         timings["slot_ms"] = int((time.perf_counter() - t1) * 1000)
 
-        # 6. merge_slots (delta가 있을 때만)
-        if delta is not None:
+        # 6. merge_slots: 추천 슬롯에 영향을 주는 intent에서만 적용.
+        # ask는 현재 추천 메뉴에 대한 질문이므로 slot extractor가 발화에서 뽑은
+        # meal_times/purpose delta를 다음 추천 조건으로 저장하면 슬롯이 오염된다.
+        # 예: "다이어트에 좋아?" → purpose="light"로 잘못 누적되어 다음 refine 결과를 흔듦.
+        # out_of_scope는 단계 3에서 이미 반환되지만 방어적으로 화이트리스트에 포함.
+        if delta is not None and effective_intent in {"recommend", "refine", "slot_fill"}:
             slots = self._merge_slots(slots, delta)
 
         free_text_delta = delta.free_text_delta if delta is not None else None
