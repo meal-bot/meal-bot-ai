@@ -40,6 +40,7 @@ def _to_cooking_time(raw) -> int | None:
 
 async def handle_recommend(
     slots: Slots,
+    free_text_delta: str | None,
     retriever: HybridRetriever,
     recipe_store: RecipeStore,
 ) -> HandlerResult:
@@ -50,6 +51,9 @@ async def handle_recommend(
     slots : Slots
         v0.3 slots 스냅샷. meal_times/purpose는 충족 상태 가정
         (orchestrator가 슬롯 충족 검사 후 호출).
+    free_text_delta : str | None
+        이번 턴 extract_slots가 뽑은 자유텍스트 delta.
+        slots.free_text(Spring 누적)가 비어 있을 때 신호 보강용 폴백.
     retriever : HybridRetriever
     recipe_store : RecipeStore
 
@@ -62,12 +66,16 @@ async def handle_recommend(
     """
     timings: dict[str, int] = {}
 
+    # slots.free_text가 비어 있으면 이번 턴 delta로 폴백.
+    # Spring이 누적해서 보내주면 slots.free_text 우선, 아니면 delta로라도 신호 살림.
+    effective_free_text = slots.free_text or free_text_delta
+
     # 1. query 빌드
     t0 = time.perf_counter()
     query = build_retrieval_query(
         meal_times=slots.meal_times,
         purpose=slots.purpose,
-        free_text=slots.free_text,
+        free_text=effective_free_text,
     )
     t1 = time.perf_counter()
     timings["query_build_ms"] = int((t1 - t0) * 1000)
@@ -98,7 +106,7 @@ async def handle_recommend(
     structured_inputs = {
         "meal_times": slots.meal_times,
         "purpose": slots.purpose,
-        "free_text": slots.free_text,
+        "free_text": effective_free_text,
     }
     t4 = time.perf_counter()
     rerank_resp = await rerank(

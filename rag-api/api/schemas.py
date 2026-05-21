@@ -99,15 +99,22 @@ class ChatResponse(BaseModel):
     @model_validator(mode="after")
     def _check_intent_recommendations_consistency(self) -> "ChatResponse":
         # intent ↔ recommendations 길이 일관성. orchestrator 안전망(1차 방어선 아님).
+        # recommend는 첫 추천이라 정확히 2개를 보장한다.
+        # refine은 조건이 좁아진 재추천이라 1~2개를 허용한다 (데이터셋 한계로 1개도 정상).
         n = len(self.recommendations)
         if self.intent in ("slot_fill", "ask"):
             if n != 0:
                 raise ValueError(
                     f"intent={self.intent!r}는 recommendations=[]여야 함 (got {n}개)"
                 )
-        else:  # recommend, refine
+        elif self.intent == "recommend":
             if n != 2:
                 raise ValueError(
                     f"intent={self.intent!r}는 recommendations 길이=2여야 함 (got {n}개)"
+                )
+        else:  # refine
+            if not (1 <= n <= 2):
+                raise ValueError(
+                    f"intent={self.intent!r}는 recommendations 길이=1~2여야 함 (got {n}개)"
                 )
         return self
