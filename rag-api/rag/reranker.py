@@ -75,6 +75,34 @@ def _get_client() -> AsyncOpenAI:
 
 # ── Helper: 후보 정제 ─────────────────────────────────────────────────────────
 
+def _coerce_list_field(value, recipe_id: str, field: str) -> list:
+    """LLM 프롬프트용 list 필드 방어 변환.
+
+    retriever 계층에서 이미 정규화하지만, retriever를 거치지 않은 경로(직접
+    호출/테스트)도 흐름이 깨지지 않게 한 번 더 막는다.
+    - native list → 그대로
+    - JSON string으로 보이는 str → json.loads 시도 후 list면 사용
+    - 그 외 / parse 실패 → [] + logger.warning
+    """
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            try:
+                parsed = json.loads(stripped)
+                if isinstance(parsed, list):
+                    return parsed
+            except json.JSONDecodeError:
+                pass
+    if value not in (None, ""):
+        logger.warning(
+            "rerank: list 필드 정규화 실패 recipe_id=%s field=%s value=%r",
+            recipe_id, field, value,
+        )
+    return []
+
+
 def _candidate_to_prompt_dict(candidate: dict) -> dict:
     """hybrid 후보 dict에서 LLM 프롬프트에 넣을 18개 필드만 추출."""
     # recipe_id / rcp_seq 정규화
@@ -89,8 +117,7 @@ def _candidate_to_prompt_dict(candidate: dict) -> dict:
         out[key] = candidate.get(key) or ""
 
     for key in _PROMPT_FIELDS_LIST:
-        value = candidate.get(key)
-        out[key] = value if isinstance(value, list) else []
+        out[key] = _coerce_list_field(candidate.get(key), recipe_id, key)
 
     out["cooking_time"] = candidate.get("cooking_time")
     out["dense_rank"]   = candidate.get("dense_rank")
