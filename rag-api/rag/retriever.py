@@ -1,6 +1,7 @@
 """Dense + BM25 retriever."""
 
 import json
+import logging
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,6 +15,56 @@ from rag.config import (
     DENSE_TOP_K, BM25_TOP_K, RRF_TOP_K, RRF_K,
 )
 from rag.tokenizer import KiwiTokenizer
+
+
+logger = logging.getLogger(__name__)
+
+
+# ChromaDB가 list 성격 메타데이터를 JSON string으로 반환하는 경우가 있어,
+# Hit.metadata에 담기 전 list로 정규화한다. BM25 raw 경로(이미 native list)도
+# 같은 함수에 통과시켜 타입을 통일.
+LIST_METADATA_FIELDS: tuple[str, ...] = (
+    "main_ingredients", "meal_time", "purpose",
+    "taste_tags", "texture_tags",
+    "recommended_situations", "dish_type_tags",
+)
+
+
+def _normalize_list_metadata_value(value) -> list[str]:
+    """단일 메타데이터 값을 list[str]로 정규화.
+
+    - native list → str 원소만 유지
+    - JSON string '[...]' → json.loads 후 str 원소만 유지
+    - None / 단일 str / parse 실패 → []
+    """
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [v for v in value if isinstance(v, str)]
+    if isinstance(value, str):
+        stripped = value.strip()
+        # JSON list 형태가 아니면 단일 str로 보고 정보 손실 감수
+        if not (stripped.startswith("[") and stripped.endswith("]")):
+            return []
+        try:
+            parsed = json.loads(stripped)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(parsed, list):
+            return []
+        return [v for v in parsed if isinstance(v, str)]
+    return []
+
+
+def _normalize_metadata(metadata: dict) -> dict:
+    """LIST_METADATA_FIELDS 7개만 정규화한 새 dict 반환. 원본은 mutate 금지."""
+    if not metadata:
+        return metadata
+    out = dict(metadata)
+    for key in LIST_METADATA_FIELDS:
+        if key in out:
+            out[key] = _normalize_list_metadata_value(out[key])
+    return out
 
 
 @dataclass
@@ -57,13 +108,14 @@ class DenseRetriever:
             rank = i + 1
             # Chroma cosine distance. 낮을수록 가까움 (0~2 범위).
             score = dist
+            normalized_meta = _normalize_metadata(meta)
             hits.append(Hit(
-                recipe_id   = meta["recipe_id"],
+                recipe_id   = normalized_meta["recipe_id"],
                 rank        = rank,
                 score       = score,
                 source      = "dense",
-                name        = meta.get("name"),
-                metadata    = meta,
+                name        = normalized_meta.get("name"),
+                metadata    = normalized_meta,
                 dense_rank  = rank,
                 dense_score = score,
             ))
@@ -114,6 +166,8 @@ class BM25Retriever:
             # BM25 raw score: 높을수록 관련성 높음. Dense distance와 스케일/방향 모두 다름.
             score = float(scores[idx])
             meta = self.recipe_metadata.get(recipe_id, {})
+            # 이미 native list라도 _normalize_metadata는 idempotent → 타입 통일 목적.
+            normalized_meta = _normalize_metadata(meta)
             rank = i + 1
 
             hits.append(Hit(
@@ -121,8 +175,8 @@ class BM25Retriever:
                 rank        = rank,
                 score       = score,
                 source      = "bm25",
-                name        = meta.get("name"),
-                metadata    = meta,
+                name        = normalized_meta.get("name"),
+                metadata    = normalized_meta,
                 dense_rank  = None,
                 dense_score = None,
                 bm25_rank   = rank,

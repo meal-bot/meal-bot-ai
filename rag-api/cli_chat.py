@@ -101,6 +101,11 @@ class ChatClient:
 
     # ── send + state update ─────────────────────────────────────────────
 
+    # free_text 누적 규칙 (Spring 백엔드와 동일):
+    # - recommend/slot_fill: 기존값 + " " + delta로 누적
+    # - refine: delta로 덮어쓰기 (조건 좁히기)
+    # - ask: 유지 (변경 없음)
+    # - flags.refused=True 또는 delta=None: 유지
     def send(self, message: str) -> None:
         resp = self._post_chat(message)
         if resp is None:
@@ -109,7 +114,37 @@ class ChatClient:
 
         # 1) 상태 업데이트 먼저 → debug 출력이 갱신된 상태를 보여줌
         intent = resp.get("intent", "?")
-        self.slots = resp.get("slots_updated") or self.slots
+        slots_updated = resp.get("slots_updated") or {}
+        free_text_delta = resp.get("free_text_delta")
+        flags = resp.get("flags") or {}
+        refused = flags.get("refused", False)
+
+        # meal_times / purpose는 서버 응답 그대로 echo
+        new_meal_times = slots_updated.get("meal_times")
+        new_purpose = slots_updated.get("purpose")
+
+        # free_text는 stateless 서버 대신 클라이언트가 intent별 규칙으로 누적/유지
+        prev = self.slots.get("free_text")
+        if free_text_delta is None or refused:
+            new_free_text = prev
+        elif intent in ("recommend", "slot_fill"):
+            if prev is None or prev == "":
+                new_free_text = free_text_delta
+            else:
+                new_free_text = f"{prev} {free_text_delta}"
+        elif intent == "refine":
+            new_free_text = free_text_delta
+        elif intent == "ask":
+            new_free_text = prev
+        else:
+            # 알 수 없는 intent는 안전하게 유지
+            new_free_text = prev
+
+        self.slots = {
+            "meal_times": new_meal_times,
+            "purpose": new_purpose,
+            "free_text": new_free_text,
+        }
         self.history.append({"role": "user", "content": message})
         self.history.append({"role": "assistant", "content": resp.get("answer", "")})
 
@@ -158,6 +193,7 @@ class ChatClient:
             print()
             print("  [debug]")
             print(f"  slots: {json.dumps(slots, ensure_ascii=False)}")
+            print(f"  free_text_accumulated: {json.dumps(self.slots.get('free_text'), ensure_ascii=False)}")
             print(f"  flags: {json.dumps(flags, ensure_ascii=False)}")
             print(f"  free_text_delta: {json.dumps(free_text_delta, ensure_ascii=False)}")
             print(
@@ -173,6 +209,7 @@ HELP_TEXT = """Commands:
   /reset        - 세션 전체 초기화 (새 session_id)
   /debug        - debug 출력 토글
   /state        - 현재 상태 출력
+  /clear_free_text - free_text 누적값만 초기화 (slots 다른 필드와 history는 유지)
   /help         - 이 도움말"""
 
 
@@ -195,6 +232,10 @@ def _handle_command(client: ChatClient, line: str) -> bool:
         print(f"slots: {json.dumps(client.slots, ensure_ascii=False)}")
         print(f"history: {len(client.history)} messages")
         print(f"last_recommendations: {len(client.last_recommendations)}")
+        return True
+    if cmd == "/clear_free_text":
+        client.slots["free_text"] = None
+        print("[free_text cleared]")
         return True
     if cmd == "/help":
         print(HELP_TEXT)

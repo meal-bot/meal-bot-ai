@@ -41,26 +41,25 @@ SPICY_LABELS: dict[int, str] = {
 
 def build_embedding_text(recipe: dict) -> str:
     """임베딩 대상 텍스트 생성."""
-    name            = recipe.get("name", "")
-    category        = recipe.get("category", "")
-    cooking_method  = recipe.get("cooking_method", "")
-    summary         = recipe.get("summary", "")
+    name           = recipe.get("name", "")
+    category       = recipe.get("category", "")
+    cooking_method = recipe.get("cooking_method", "")
+    summary        = recipe.get("summary", "")
 
     main_ingredients = recipe.get("main_ingredients") or []
     meal_time        = recipe.get("meal_time") or []
     purpose          = recipe.get("purpose") or []
-    spicy_level      = recipe.get("spicy_level", 1)
-    cooking_time     = recipe.get("cooking_time")
 
     taste_tags             = recipe.get("taste_tags") or []
     texture_tags           = recipe.get("texture_tags") or []
     recommended_situations = recipe.get("recommended_situations") or []
     dish_type_tags         = recipe.get("dish_type_tags") or []
-    difficulty             = recipe.get("difficulty", "")
+
+    question_1 = recipe.get("question_1", "")
+    question_2 = recipe.get("question_2", "")
+    question_3 = recipe.get("question_3", "")
 
     purpose_str = ", ".join(PURPOSE_LABELS.get(p, p) for p in purpose)
-    spicy_label = SPICY_LABELS.get(spicy_level, "안 매움")
-    time_line   = f"조리시간: 약 {cooking_time}분" if cooking_time is not None else "조리시간: 미상"
 
     return (
         f"{name} | {category} | {cooking_method}\n"
@@ -68,13 +67,13 @@ def build_embedding_text(recipe: dict) -> str:
         f"주재료: {', '.join(main_ingredients)}\n"
         f"시간대: {', '.join(meal_time)}\n"
         f"목적: {purpose_str}\n"
-        f"매운맛: {spicy_label}\n"
-        f"{time_line}\n"
         f"음식유형: {', '.join(dish_type_tags)}\n"
         f"맛: {', '.join(taste_tags)}\n"
         f"식감: {', '.join(texture_tags)}\n"
         f"추천상황: {', '.join(recommended_situations)}\n"
-        f"난이도: {difficulty}"
+        f"검색표현1: {question_1}\n"
+        f"검색표현2: {question_2}\n"
+        f"검색표현3: {question_3}"
     )
 
 
