@@ -234,7 +234,17 @@ async def handle_refine(
     t3 = time.perf_counter()
     timings["retrieval_ms"] = int((t3 - t2) * 1000)
 
-    candidates = [h.metadata for h in hits if h.metadata]
+    # Hit의 retrieval 신호(dense_rank/bm25_rank/RRF score)를 rerank LLM에 전달하기 위해
+    # metadata를 얕은 복사한 뒤 세 필드를 머지. 한쪽에만 잡힌 후보는 반대편 rank가 None.
+    candidates: list[dict] = []
+    for h in hits:
+        if not h.metadata:
+            continue
+        cand = dict(h.metadata)
+        cand["dense_rank"] = h.dense_rank
+        cand["bm25_rank"] = h.bm25_rank
+        cand["rrf_score"] = h.score
+        candidates.append(cand)
 
     # 4. 0건이면 즉시 ask로 fallback
     if not candidates:

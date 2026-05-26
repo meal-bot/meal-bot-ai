@@ -5,6 +5,7 @@ docs/prompts/intent-v0.3.md 명세 구현.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -19,6 +20,7 @@ from api.prompts.intent_prompt import (
     USER_PROMPT_TEMPLATE,
     format_history,
 )
+from rag.config import INTENT_TIMEOUT_SECONDS
 
 
 logger = logging.getLogger(__name__)
@@ -98,17 +100,28 @@ async def classify_intent(
     client = _get_client()
 
     try:
-        response = await client.chat.completions.create(
-            model="gpt-5-mini",
-            max_completion_tokens=2000,
-            reasoning_effort="minimal",
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            timeout=5.0,
+        response = await asyncio.wait_for(
+            client.chat.completions.create(
+                model="gpt-5-mini",
+                max_completion_tokens=2000,
+                reasoning_effort="minimal",
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                timeout=INTENT_TIMEOUT_SECONDS,
+            ),
+            timeout=INTENT_TIMEOUT_SECONDS,
         )
+    except asyncio.TimeoutError as e:
+        logger.warning(
+            "intent.classify_intent: timeout after %.1fs",
+            INTENT_TIMEOUT_SECONDS,
+        )
+        raise IntentClassifyError(
+            f"timeout after {INTENT_TIMEOUT_SECONDS}s"
+        ) from e
     except Exception as e:
         logger.warning("intent.classify_intent: LLM call failed: %s", e)
         raise IntentClassifyError(f"LLM call failed: {e}") from e

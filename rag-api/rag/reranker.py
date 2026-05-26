@@ -2,6 +2,7 @@
 
 Hybrid top-30 후보를 받아 GPT-5-mini로 top-5를 선정한다.
 validation + 재시도 1회 + fallback + JSONL 로깅까지 모두 처리한다.
+P0: retry loop 전체를 RERANK_TIMEOUT_SECONDS로 감싸 tail latency 보호.
 """
 
 import asyncio
@@ -21,6 +22,7 @@ from rag.config import (
     RERANK_TOP_K_OUTPUT,
     RERANK_MIN_CANDIDATES,
     RERANK_RETRY_LIMIT,
+    RERANK_TIMEOUT_SECONDS,
     LOG_DIR,
     RERANK_LOG_FILE_PATTERN,
 )
@@ -120,6 +122,7 @@ def _candidate_to_prompt_dict(candidate: dict) -> dict:
         out[key] = _coerce_list_field(candidate.get(key), recipe_id, key)
 
     out["cooking_time"] = candidate.get("cooking_time")
+    out["spicy_level"]  = candidate.get("spicy_level")
     out["dense_rank"]   = candidate.get("dense_rank")
     out["bm25_rank"]    = candidate.get("bm25_rank")
     out["rrf_score"]    = candidate.get("rrf_score")
@@ -145,6 +148,73 @@ def _build_fallback_response(candidates: list[dict], top_k: int) -> RerankRespon
             recipe_id=str(rid) if rid is not None else "",
             reason=_FALLBACK_REASON,
             matched_intents=list(_FALLBACK_INTENTS),
+        ))
+
+    return RerankResponse(
+        recommendations=items,
+        insufficient_matches=len(items) < top_k,
+        is_fallback=True,
+    )
+
+
+# ── Helper: timeout fallback (P0) ─────────────────────────────────────────────
+
+def _build_timeout_fallback_reason(cand: dict) -> str:
+    """timeout 시 rule-based reason 생성. 단계적 강등.
+
+    의학/건강/효능/다이어트 평가 표현은 일절 쓰지 않는다.
+    LLM이 만들지 않으므로 환각 위험도 0.
+    """
+    ct = cand.get("cooking_time")
+    taste_tags = cand.get("taste_tags") or []
+    dish_type_tags = cand.get("dish_type_tags") or []
+    name = cand.get("name") or "이"
+
+    has_taste = bool(taste_tags) and isinstance(taste_tags[0], str)
+    has_dish  = bool(dish_type_tags) and isinstance(dish_type_tags[0], str)
+
+    if has_taste and has_dish:
+        if ct is not None:
+            return f"조리시간 약 {ct}분의 {taste_tags[0]} {dish_type_tags[0]} 메뉴입니다."
+        return f"{taste_tags[0]} {dish_type_tags[0]} 메뉴입니다."
+    if has_dish:
+        if ct is not None:
+            return f"조리시간 약 {ct}분의 {dish_type_tags[0]} 메뉴입니다."
+        return f"{dish_type_tags[0]} 메뉴입니다."
+    if has_taste:
+        return f"{taste_tags[0]} 메뉴입니다."
+    return f"{name} 메뉴를 추천합니다."
+
+
+def _build_timeout_fallback_response(
+    candidates: list[dict],
+    top_k: int,
+    structured_inputs: dict | None = None,
+) -> RerankResponse:
+    """timeout 발생 시 RRF 상위 top_k건을 rule-based reason과 함께 반환."""
+    picked = candidates[:top_k]
+
+    # matched_intents는 슬롯에서 추출 가능한 1~2개를 공통으로 사용
+    matched: list[str] = []
+    if structured_inputs:
+        meal_times = structured_inputs.get("meal_times") or []
+        if meal_times and isinstance(meal_times[0], str):
+            matched.append(meal_times[0])
+        purpose = structured_inputs.get("purpose")
+        if purpose and isinstance(purpose, str):
+            matched.append(purpose)
+    if not matched:
+        matched = ["기본추천"]
+    matched = matched[:4]
+
+    items: list[RerankItem] = []
+    for i, c in enumerate(picked):
+        rid = c.get("recipe_id") or c.get("rcp_seq")
+        items.append(RerankItem(
+            rank=i + 1,
+            recipe_id=str(rid) if rid is not None else "",
+            reason=_build_timeout_fallback_reason(c),
+            matched_intents=list(matched),
         ))
 
     return RerankResponse(
@@ -313,6 +383,61 @@ async def _call_llm(system_prompt: str, user_prompt: str) -> RerankResponse:
     return parsed
 
 
+async def _run_rerank_with_retries(
+    system_prompt: str,
+    user_prompt_base: str,
+    candidate_ids: set[str],
+    top_k: int,
+) -> tuple[RerankResponse | None, list[str], int, dict | None]:
+    """LLM 호출 + validation + 재시도 루프.
+
+    Returns
+    -------
+    (parsed, last_errors, retry_count, llm_raw_response)
+    parsed=None이면 호출/검증 모두 실패. asyncio.TimeoutError는 호출자에서 처리.
+    """
+    parsed: RerankResponse | None = None
+    last_errors: list[str] = []
+    retry_count = 0
+    llm_raw_response: dict | None = None
+    user_prompt = user_prompt_base
+
+    max_attempts = RERANK_RETRY_LIMIT + 1
+    for attempt in range(max_attempts):
+        try:
+            candidate_response = await _call_llm(system_prompt, user_prompt)
+            llm_raw_response = candidate_response.model_dump()
+
+            ok, errors = _validate_response(
+                candidate_response, candidate_ids, top_k,
+            )
+            if ok:
+                parsed = candidate_response
+                last_errors = []
+                break
+
+            last_errors = errors
+            logger.warning(
+                f"rerank validation 실패 (attempt={attempt + 1}): {errors}"
+            )
+        except Exception as e:
+            last_errors = [f"LLM 호출 예외: {e}"]
+            logger.warning(
+                f"rerank LLM 호출 실패 (attempt={attempt + 1}): {e}"
+            )
+
+        if attempt < max_attempts - 1:
+            retry_count += 1
+            error_block = "\n".join(f"- {m}" for m in last_errors)
+            user_prompt = (
+                f"{user_prompt_base}\n\n"
+                f"[이전 응답 오류]\n{error_block}\n"
+                f"수정해서 다시 응답하시오."
+            )
+
+    return parsed, last_errors, retry_count, llm_raw_response
+
+
 # ── 메인 엔트리 ───────────────────────────────────────────────────────────────
 
 async def rerank(
@@ -402,47 +527,34 @@ async def rerank(
             f"이번 추천에서는 이전 추천과 다른 매력 포인트를 reason에 강조하세요."
         )
 
-    # 5. LLM 호출 (1차 + 최대 RERANK_RETRY_LIMIT 회 재시도)
-    parsed: RerankResponse | None = None
-    last_errors: list[str] = []
-    user_prompt = user_prompt_base
-
-    max_attempts = RERANK_RETRY_LIMIT + 1
-    for attempt in range(max_attempts):
-        try:
-            candidate_response = await _call_llm(SYSTEM_PROMPT, user_prompt)
-            llm_raw_response = candidate_response.model_dump()
-
-            ok, errors = _validate_response(
-                candidate_response, candidate_ids, top_k,
-            )
-            if ok:
-                parsed = candidate_response
-                last_errors = []
-                break
-
-            last_errors = errors
-            logger.warning(
-                f"rerank validation 실패 (attempt={attempt + 1}): {errors}"
-            )
-        except Exception as e:
-            last_errors = [f"LLM 호출 예외: {e}"]
-            logger.warning(
-                f"rerank LLM 호출 실패 (attempt={attempt + 1}): {e}"
-            )
-
-        # 재시도 여지가 남았으면 프롬프트 보강 후 retry
-        if attempt < max_attempts - 1:
-            retry_count += 1
-            error_block = "\n".join(f"- {m}" for m in last_errors)
-            user_prompt = (
-                f"{user_prompt_base}\n\n"
-                f"[이전 응답 오류]\n{error_block}\n"
-                f"수정해서 다시 응답하시오."
-            )
+    # 5. LLM 호출 + validation + retry. 전체를 RERANK_TIMEOUT_SECONDS로 감싼다.
+    # timeout이 발생하면 retry는 더 돌지 않고 즉시 timeout fallback으로 빠짐.
+    timeout_triggered = False
+    try:
+        parsed, last_errors, retry_count, llm_raw_response = await asyncio.wait_for(
+            _run_rerank_with_retries(
+                SYSTEM_PROMPT, user_prompt_base, candidate_ids, top_k,
+            ),
+            timeout=RERANK_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        logger.warning(
+            "rerank: timeout after %.1fs, returning RRF fallback",
+            RERANK_TIMEOUT_SECONDS,
+        )
+        timeout_triggered = True
+        parsed = None
+        last_errors = [f"timeout after {RERANK_TIMEOUT_SECONDS}s"]
+        # retry_count, llm_raw_response는 함수 상단 초기화 값(0, None) 유지
 
     # 6. 최종 처리
-    if parsed is None:
+    if timeout_triggered:
+        final = _build_timeout_fallback_response(
+            prompt_candidates, top_k, structured_inputs,
+        )
+        validation_errors = []
+        # rerank_failed=False (timeout은 의도된 안전망, 호출/검증 실패와 구분)
+    elif parsed is None:
         rerank_failed = True
         validation_errors = last_errors
         final = _build_fallback_response(prompt_candidates, top_k)
@@ -454,7 +566,7 @@ async def rerank(
     latency_ms = int((time.perf_counter() - start_ts) * 1000)
 
     # 7. 로깅
-    _log_to_jsonl({
+    log_entry: dict = {
         "ts":                 datetime.now().isoformat(),
         "query":              query,
         "structured_inputs":  structured_inputs,
@@ -466,7 +578,10 @@ async def rerank(
         "rerank_failed":      rerank_failed,
         "latency_ms":         latency_ms,
         "final_response":     final.model_dump(),
-    })
+    }
+    if timeout_triggered:
+        log_entry["skip_reason"] = "timeout"
+    _log_to_jsonl(log_entry)
     _log_summary(query, latency_ms, retry_count, rerank_failed)
 
     return final

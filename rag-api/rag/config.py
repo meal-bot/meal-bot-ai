@@ -4,6 +4,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# LLM 호출 타임아웃 (P0 tail latency 보호막)
+# SDK timeout과 asyncio.wait_for 둘 다에 같은 값을 적용한다.
+# - SDK timeout: 단일 HTTP 요청 수준 보호
+# - asyncio.wait_for: 호출 전체(SDK 내부 hang 포함) 보호
+RERANK_TIMEOUT_SECONDS = float(os.getenv("RERANK_TIMEOUT_SECONDS", "30.0"))
+INTENT_TIMEOUT_SECONDS = float(os.getenv("INTENT_TIMEOUT_SECONDS", "5.0"))
+SLOT_TIMEOUT_SECONDS   = float(os.getenv("SLOT_TIMEOUT_SECONDS",   "8.0"))
+
 CHROMA_PATH          = "chroma/recipes_v2"
 COLLECTION_NAME      = "meal_bot_recipes_v2"
 EMBEDDING_MODEL      = "BAAI/bge-m3"
