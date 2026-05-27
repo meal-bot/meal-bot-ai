@@ -1,0 +1,1 @@
+{"session_id":"baseline-a","turn_id":"a-t2","message":"없음","history":[{"role":"user","content":"야식으로 든든하게 먹을거 추천해줘"},{"role":"assistant","content":"마지막으로, 더 알려주실 정보가 있으세요? (없으면 '없음'이나 '패스'라고 답해주세요)"}],"slots":{"meal_times":["야식"],"purpose":"hearty","free_text":null},"last_recommendations":[]}
