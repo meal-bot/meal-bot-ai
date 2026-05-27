@@ -2,6 +2,12 @@ name: AI Deploy
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - '.github/**'
+      - '**.md'
 
 jobs:
   deploy:

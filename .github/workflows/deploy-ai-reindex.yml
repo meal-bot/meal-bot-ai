@@ -21,32 +21,33 @@ jobs:
 
       - name: Reindex on server
         run: |
-          ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40 \
+          ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=60 \
               -i ~/.ssh/deploy_key \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
               REBUILD=${{ inputs.rebuild_image }} bash << 'REMOTE'
             set -euo pipefail
             cd ~/meal-bot/ai
-            echo "=== [1/6] Pull latest code ==="
+            echo "=== [1/7] Pull latest code ==="
             git fetch origin develop
             git reset --hard origin/develop
             git log --oneline -1
             if [ "$REBUILD" = "true" ]; then
-              echo "=== [2/6] Rebuild image ==="
+              echo "=== [2/7] Rebuild image ==="
               docker compose -f compose.prod.yml build
             else
-              echo "=== [2/6] Skip image rebuild ==="
+              echo "=== [2/7] Skip image rebuild ==="
             fi
-            echo "=== [3/6] Stop container (release chroma file locks) ==="
+            echo "=== [3/7] Stop container (release chroma file locks) ==="
             docker compose -f compose.prod.yml down
-            echo "=== [4/6] Rebuild ChromaDB (~15 min) ==="
-            docker compose -f compose.prod.yml run --rm ai \
-              python scripts/build_vector_db.py
-            echo "=== [5/6] Rebuild BM25 ==="
+            echo "=== [4/7] Rebuild BM25 index ==="
             docker compose -f compose.prod.yml run --rm ai \
               python scripts/build_bm25_index.py
-            echo "=== [6/6] Start container + wait for healthy ==="
+            echo "=== [5/7] Rebuild ChromaDB (~15 min) ==="
+            docker compose -f compose.prod.yml run --rm ai \
+              python scripts/build_vector_db.py
+            echo "=== [6/7] Start container ==="
             docker compose -f compose.prod.yml up -d
+            echo "=== [7/7] Wait for healthy ==="
             for i in {1..30}; do
               status=$(docker inspect --format='{{.State.Health.Status}}' meal-bot-ai 2>/dev/null || echo "starting")
               echo "  attempt $i/30: $status"
