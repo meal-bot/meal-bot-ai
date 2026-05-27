@@ -28,9 +28,22 @@ from api.errors import QueryRebuildError
 from api.handler_result import HandlerResult
 from api.prompts.refine_prompt import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
 from api.schemas import LastRecommendation, Recommendation, Slots
+from rag.answer_generator import (
+    AnswerGeneratorError,
+    AnswerTimeoutError,
+    AnswerValidationError,
+    generate_answer,
+)
 from rag.recipe_store import RecipeStore
 from rag.reranker import rerank
 from rag.retriever import HybridRetriever
+
+
+# answer_generator 실패 시 사용할 정적 fallback 베이스 문구.
+# 기존 _build_refine_answer는 free_text_delta를 본문에 echo했지만
+# baseline에서 "다른거 추천해줘 반영해서…" 같은 비문이 발견되어
+# fallback에서는 그 echo를 제거한 단순 문구를 사용한다.
+_REFINE_FALLBACK_ANSWER_BASE = "조건에 맞춰 다시 골라봤어요."
 
 
 logger = logging.getLogger(__name__)
@@ -178,7 +191,10 @@ async def _rebuild_query_with_llm(
 
 
 def _build_refine_answer(free_text_delta: str | None, count: int = 2) -> str:
-    """refine 정상 응답의 answer 메시지 (템플릿 + 변수).
+    """refine 정상 응답의 answer 메시지 (템플릿 + 변수). [DEPRECATED]
+
+    answer_generator 도입(2-3단계) 이후 호출 경로에서 제외되었으나,
+    rollback 대비 및 외부 import 대비를 위해 함수는 보존한다.
 
     count는 최종 recommendations 개수. 데이터셋 한계로 1개만 잡힌 경우
     조건이 좁다는 안내 톤으로 분기한다.
@@ -188,6 +204,13 @@ def _build_refine_answer(free_text_delta: str | None, count: int = 2) -> str:
     if free_text_delta:
         return f"{free_text_delta} 반영해서 다시 골라봤어요."
     return "조건 반영해서 다시 골라봤어요."
+
+
+def _build_refine_fallback_answer(count: int) -> str:
+    """answer_generator 실패 시 사용할 정적 fallback. count는 최종 추천 개수."""
+    if count == 1:
+        return "조건이 좁아서 1개만 추천드려요."
+    return _REFINE_FALLBACK_ANSWER_BASE
 
 
 # ── 핸들러 본체 ──────────────────────────────────────────────────────────
@@ -283,8 +306,11 @@ async def handle_refine(
     timings["rerank_ms"] = int((t5 - t4) * 1000)
 
     # 6. Recommendation 매핑
+    # answer_generator에 raw 레시피 dict가 필요하므로 lookup 결과를 병렬 보관.
+    # RecipeStore.get_recipe_by_id 추가 호출 없이 같은 lookup 결과를 재사용한다.
     t6 = time.perf_counter()
     recommendations: list[Recommendation] = []
+    recipe_details: list[dict] = []
     missing_ids: list[str] = []
     for item in rerank_resp.recommendations:
         normalized = _normalize_recipe_id(item.recipe_id)
@@ -304,6 +330,7 @@ async def handle_refine(
                 reason=item.reason,
             )
         )
+        recipe_details.append(recipe)
     t7 = time.perf_counter()
     timings["lookup_ms"] = int((t7 - t6) * 1000)
 
@@ -331,18 +358,48 @@ async def handle_refine(
         # rerank가 1건만 반환한 빈도 관찰용. 데이터셋 한계 모니터링.
         logger.info("refine: single recommendation returned (got=1)")
 
-    # 7. answer 생성 (1개일 때는 조건 좁다는 안내 톤으로 분기)
-    answer = _build_refine_answer(free_text_delta, count=rec_count)
+    # 7. answer 본문 LLM 생성 (실패 시 정적 템플릿으로 silent fallback)
+    # 추천 결과 자체는 정상이며 본문 텍스트 톤만 강등되는 케이스이므로,
+    # recommendations / 응답 스키마 불변식(refine: 1~2개)은 영향 받지 않는다.
+    # previously_recommended_names는 rerank에 전달했던 동일 리스트를 재사용한다.
+    final_recommendations = recommendations[:2]
+    final_recipe_details = recipe_details[:2]
+
+    t8 = time.perf_counter()
+    answer_is_fallback = False
+    try:
+        answer_resp = await generate_answer(
+            intent="refine",
+            user_query=message,
+            slots=slots,
+            free_text_delta=free_text_delta,
+            recommendations=final_recommendations,
+            recipe_details=final_recipe_details,
+            previously_recommended_names=previously_recommended,
+        )
+        answer_text = answer_resp.answer
+    except (AnswerTimeoutError, AnswerValidationError, AnswerGeneratorError) as e:
+        logger.warning(
+            "refine: answer_generator failed (%s: %s), using static fallback",
+            type(e).__name__, e,
+        )
+        answer_text = _build_refine_fallback_answer(len(final_recommendations))
+        answer_is_fallback = True
+    t9 = time.perf_counter()
+    timings["answer_ms"] = int((t9 - t8) * 1000)
 
     # 8. 정상 응답
+    # is_fallback은 query rebuild / rerank / answer 생성 어느 한쪽이라도
+    # fallback이면 True. answer fallback은 텍스트 톤만 강등된 케이스이지만
+    # 클라이언트 호환을 위해 같은 flag로 합성.
     flags_override: dict[str, bool] = {}
-    if is_fallback or rerank_resp.is_fallback:
+    if is_fallback or rerank_resp.is_fallback or answer_is_fallback:
         flags_override["is_fallback"] = True
 
     return HandlerResult(
         intent="refine",
-        answer=answer,
-        recommendations=recommendations[:2],
+        answer=answer_text,
+        recommendations=final_recommendations,
         flags_override=flags_override,
         timings=timings,
     )

@@ -14,10 +14,20 @@ import time
 
 from api.handler_result import HandlerResult
 from api.schemas import Recommendation, Slots
+from rag.answer_generator import (
+    AnswerGeneratorError,
+    AnswerTimeoutError,
+    AnswerValidationError,
+    generate_answer,
+)
 from rag.query_builder import build_retrieval_query
 from rag.recipe_store import RecipeStore
 from rag.reranker import rerank
 from rag.retriever import HybridRetriever
+
+
+# 기존 정적 answer 템플릿. answer_generator가 실패하면 이 값으로 silent fallback.
+_RECOMMEND_FALLBACK_ANSWER = "조건에 맞춰 2개 골라봤어요."
 
 
 logger = logging.getLogger(__name__)
@@ -41,6 +51,7 @@ def _to_cooking_time(raw) -> int | None:
 async def handle_recommend(
     slots: Slots,
     free_text_delta: str | None,
+    user_query: str,
     retriever: HybridRetriever,
     recipe_store: RecipeStore,
 ) -> HandlerResult:
@@ -54,6 +65,8 @@ async def handle_recommend(
     free_text_delta : str | None
         이번 턴 extract_slots가 뽑은 자유텍스트 delta.
         slots.free_text(Spring 누적)가 비어 있을 때 신호 보강용 폴백.
+    user_query : str
+        이번 턴 사용자 원문 발화. answer 본문 LLM 생성 시 입력으로 전달.
     retriever : HybridRetriever
     recipe_store : RecipeStore
 
@@ -130,8 +143,11 @@ async def handle_recommend(
     timings["rerank_ms"] = int((t5 - t4) * 1000)
 
     # 5. rerank 결과 → Recommendation 매핑
+    # answer_generator에 raw 레시피 dict가 필요하므로 lookup 결과를 병렬 보관.
+    # RecipeStore.get_recipe_by_id 추가 호출 없이 같은 lookup 결과를 재사용한다.
     t6 = time.perf_counter()
     recommendations: list[Recommendation] = []
+    recipe_details: list[dict] = []
     missing_ids: list[str] = []
     for item in rerank_resp.recommendations:
         normalized = _normalize_recipe_id(item.recipe_id)
@@ -153,6 +169,7 @@ async def handle_recommend(
                 reason=item.reason,
             )
         )
+        recipe_details.append(recipe)
     t7 = time.perf_counter()
     timings["lookup_ms"] = int((t7 - t6) * 1000)
 
@@ -179,15 +196,47 @@ async def handle_recommend(
             timings=timings,
         )
 
-    # 7. 정상 응답
+    # 7. answer 본문 LLM 생성 (실패 시 정적 템플릿으로 silent fallback)
+    # 추천 결과 자체는 정상이며 본문 텍스트 톤만 강등되는 케이스이므로,
+    # recommendations / 응답 스키마 불변식은 영향 받지 않는다.
+    final_recommendations = recommendations[:2]
+    final_recipe_details = recipe_details[:2]
+
+    t8 = time.perf_counter()
+    answer_is_fallback = False
+    try:
+        answer_resp = await generate_answer(
+            intent="recommend",
+            user_query=user_query,
+            slots=slots,
+            free_text_delta=free_text_delta,
+            recommendations=final_recommendations,
+            recipe_details=final_recipe_details,
+            previously_recommended_names=None,
+        )
+        answer_text = answer_resp.answer
+    except (AnswerTimeoutError, AnswerValidationError, AnswerGeneratorError) as e:
+        logger.warning(
+            "recommend: answer_generator failed (%s: %s), using static fallback",
+            type(e).__name__, e,
+        )
+        answer_text = _RECOMMEND_FALLBACK_ANSWER
+        answer_is_fallback = True
+    t9 = time.perf_counter()
+    timings["answer_ms"] = int((t9 - t8) * 1000)
+
+    # 8. 정상 응답
+    # is_fallback은 rerank 또는 answer 생성 어느 한쪽이라도 fallback이면 True.
+    # answer fallback은 텍스트 톤이 정적 템플릿으로 강등된 케이스로,
+    # recommendations 자체는 정상이지만 클라이언트 호환을 위해 같은 flag로 합성.
     flags_override: dict[str, bool] = {}
-    if rerank_resp.is_fallback:
+    if rerank_resp.is_fallback or answer_is_fallback:
         flags_override["is_fallback"] = True
 
     return HandlerResult(
         intent="recommend",
-        answer="조건에 맞춰 2개 골라봤어요.",
-        recommendations=recommendations[:2],  # 안전장치
+        answer=answer_text,
+        recommendations=final_recommendations,  # 안전장치 (이미 [:2] 슬라이스됨)
         flags_override=flags_override,
         timings=timings,
     )

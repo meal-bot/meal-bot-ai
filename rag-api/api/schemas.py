@@ -125,3 +125,71 @@ class ChatResponse(BaseModel):
                     f"intent={self.intent!r}는 recommendations 길이=1~2여야 함 (got {n}개)"
                 )
         return self
+
+
+# === Recipe Detail (GET /recipes/{recipe_id}) ===
+# 모달 표시용 단건 조회 응답 스키마. recipes_enriched_v2.json 28개 필드 중
+# 모달이 실제로 쓰는 13개만 노출하고, 내부 메타 필드(enrichment_flags,
+# question_1~3, ingredient_count_*, ingredients raw, hash_tag, cooking_way,
+# ingredients_clean, meal_time, purpose)는 응답에서 제외한다.
+# rcp_seq → recipe_id 키 변환은 라우트 핸들러에서 수행 (스키마에 validator 없음).
+
+
+class RecipeManualStep(BaseModel):
+    """조리법 단계. img는 1145/1146건에서 채워져 있지만 manuals 자체 결측 1건 보호용 Optional."""
+
+    step: int
+    desc: str
+    img: str | None = None
+
+
+class RecipeIngredient(BaseModel):
+    """식재료 한 항목."""
+
+    name: str
+    amount: str
+    note: str | None = None
+
+
+class RecipeIngredientsStructured(BaseModel):
+    """식재료를 main/sauce/garnish 3 카테고리로 구조화.
+
+    1146건 모두 세 키가 존재하며, 비어있을 수 있어 sauce/garnish는 default 빈 배열.
+    """
+
+    main: list[RecipeIngredient]
+    sauce: list[RecipeIngredient] = Field(default_factory=list)
+    garnish: list[RecipeIngredient] = Field(default_factory=list)
+
+
+class RecipeNutrition(BaseModel):
+    """영양 정보. 1146건 전체에서 5개 키 모두 채워져 있어 non-optional."""
+
+    energy_kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    sodium_mg: float
+
+
+class RecipeDetail(BaseModel):
+    """GET /recipes/{recipe_id} 응답 스키마.
+
+    모달 표시에 필요한 13개 필드만 노출. 내부 메타는 응답에 포함하지 않는다.
+    """
+
+    recipe_id: str = Field(..., description="recipes_enriched_v2.json의 rcp_seq")
+    name: str
+    summary: str
+    category: str
+    main_ingredients: list[str]
+    taste_tags: list[str] = Field(default_factory=list)
+    dish_type_tags: list[str] = Field(default_factory=list)
+    cooking_time: int  # 분 단위
+    difficulty: str    # 쉬움/보통/어려움
+    spicy_level: int   # 1~4
+    nutrition: RecipeNutrition
+    ingredients_structured: RecipeIngredientsStructured
+    manuals: list[RecipeManualStep] = Field(default_factory=list)
+    img_main: str | None = None
+    img_thumb: str | None = None
