@@ -1,0 +1,62 @@
+name: AI Reindex
+
+on:
+  workflow_dispatch:
+    inputs:
+      rebuild_image:
+        description: "Rebuild image before reindex (use if code also changed)"
+        type: boolean
+        default: false
+
+jobs:
+  reindex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Reindex on server
+        run: |
+          ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40 \
+              -i ~/.ssh/deploy_key \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+              REBUILD=${{ inputs.rebuild_image }} bash << 'REMOTE'
+            set -euo pipefail
+            cd ~/meal-bot/ai
+            echo "=== [1/6] Pull latest code ==="
+            git fetch origin develop
+            git reset --hard origin/develop
+            git log --oneline -1
+            if [ "$REBUILD" = "true" ]; then
+              echo "=== [2/6] Rebuild image ==="
+              docker compose -f compose.prod.yml build
+            else
+              echo "=== [2/6] Skip image rebuild ==="
+            fi
+            echo "=== [3/6] Stop container (release chroma file locks) ==="
+            docker compose -f compose.prod.yml down
+            echo "=== [4/6] Rebuild ChromaDB (~15 min) ==="
+            docker compose -f compose.prod.yml run --rm ai \
+              python scripts/build_vector_db.py
+            echo "=== [5/6] Rebuild BM25 ==="
+            docker compose -f compose.prod.yml run --rm ai \
+              python scripts/build_bm25_index.py
+            echo "=== [6/6] Start container + wait for healthy ==="
+            docker compose -f compose.prod.yml up -d
+            for i in {1..30}; do
+              status=$(docker inspect --format='{{.State.Health.Status}}' meal-bot-ai 2>/dev/null || echo "starting")
+              echo "  attempt $i/30: $status"
+              if [ "$status" = "healthy" ]; then
+                echo "=== Reindex SUCCESS ==="
+                exit 0
+              fi
+              sleep 3
+            done
+            echo "=== Reindex FAILED (healthcheck timeout) ==="
+            docker logs --tail 30 meal-bot-ai
+            exit 1
+          REMOTE
