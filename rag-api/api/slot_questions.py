@@ -20,7 +20,7 @@ from api.schemas import ChatMessage, Slots
 # 완전 일치할 때 슬롯 질문으로 판정한다.
 SLOT_QUESTIONS: dict[str, str] = {
     "missing_meal_times": "어떤 시간대에 드실 거예요? (아침/점심/저녁/간식/야식)",
-    "missing_purpose": "어떤 스타일을 원하세요? (가볍게/단백질/든든하게/맛있게)",
+    "missing_purpose": "어떤 스타일을 원하세요? (가볍게/근육/든든하게/맛있게)",
     "missing_both": "어떤 시간대에 어떤 스타일로 드실 거예요?",
     "retrieval_zero": "조건에 맞는 메뉴를 못 찾았어요. 조건을 조금 풀어볼까요?",
     "lookup_insufficient": "조건에 맞는 메뉴를 충분히 못 찾았어요. 조건을 조금 풀어볼까요?",

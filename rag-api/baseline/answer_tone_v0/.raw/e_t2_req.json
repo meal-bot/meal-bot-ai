@@ -1,0 +1,1 @@
+{"session_id":"baseline-e","turn_id":"e-t2","message":"단백질 위주의 식단으로","history":[{"role":"user","content":"점심 메뉴 추천해줘"},{"role":"assistant","content":"어떤 스타일을 원하세요? (가볍게/단백질/든든하게/맛있게)"}],"slots":{"meal_times":["점심"],"purpose":null,"free_text":null},"last_recommendations":[]}

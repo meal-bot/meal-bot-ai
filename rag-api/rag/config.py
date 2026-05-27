@@ -11,6 +11,7 @@ load_dotenv()
 RERANK_TIMEOUT_SECONDS = float(os.getenv("RERANK_TIMEOUT_SECONDS", "30.0"))
 INTENT_TIMEOUT_SECONDS = float(os.getenv("INTENT_TIMEOUT_SECONDS", "5.0"))
 SLOT_TIMEOUT_SECONDS   = float(os.getenv("SLOT_TIMEOUT_SECONDS",   "8.0"))
+ANSWER_TIMEOUT_SECONDS = float(os.getenv("ANSWER_TIMEOUT_SECONDS", "8.0"))
 
 CHROMA_PATH          = "chroma/recipes_v2"
 COLLECTION_NAME      = "meal_bot_recipes_v2"
@@ -45,7 +46,14 @@ RAG_QA_REASONING_EFFORT = RERANK_REASONING_EFFORT
 RAG_QA_RETRY_LIMIT      = 1
 QA_MAX_DOCS             = 3
 
+# LLM Answer Generation (recommend/refine intent의 answer 본문)
+# rag/answer_generator.py에서 사용. timeout은 위 ANSWER_TIMEOUT_SECONDS 참조.
+ANSWER_MODEL                 = RERANK_MODEL
+ANSWER_REASONING_EFFORT      = "minimal"
+ANSWER_MAX_COMPLETION_TOKENS = 500
+
 # Logging
 LOG_DIR                  = "logs"
 RERANK_LOG_FILE_PATTERN  = "rerank_{date}.jsonl"
 QA_LOG_FILE_PATTERN      = "qa_{date}.jsonl"
+ANSWER_LOG_FILE_PATTERN  = "answer_{date}.jsonl"

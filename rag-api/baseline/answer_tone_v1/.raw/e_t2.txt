@@ -1,0 +1,2 @@
+{"turn_id":"t2","intent":"slot_fill","answer":"마지막으로, 더 알려주실 정보가 있으세요? (없으면 '없음'이나 '패스'라고 답해주세요)","slots_updated":{"meal_times":["점심"],"purpose":"protein","free_text":null},"recommendations":[],"flags":{"needs_more_slots":true,"out_of_scope":false,"is_fallback":false,"refused":false},"free_text_delta":null}
+__ELAPSED__2.657347__

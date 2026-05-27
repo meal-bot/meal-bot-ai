@@ -322,6 +322,7 @@ class ChatOrchestrator:
             result = await handle_recommend(
                 slots=slots,
                 free_text_delta=free_text_delta,
+                user_query=request.message,
                 retriever=self.retriever,
                 recipe_store=self.recipe_store,
             )

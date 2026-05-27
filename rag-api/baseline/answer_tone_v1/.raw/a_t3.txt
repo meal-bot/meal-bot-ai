@@ -1,0 +1,2 @@
+{"turn_id":"t3","intent":"ask","answer":"문서 기준으로 1번 메뉴의 열량은 약 218.2kcal입니다.","slots_updated":{"meal_times":["야식"],"purpose":"hearty","free_text":null},"recommendations":[],"flags":{"needs_more_slots":false,"out_of_scope":false,"is_fallback":false,"refused":false},"free_text_delta":null}
+__ELAPSED__5.452821__

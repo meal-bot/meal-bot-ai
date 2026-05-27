@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from api.chat_orchestrator import ChatOrchestrator
-from api.schemas import ChatRequest, ChatResponse, HealthResponse
+from api.schemas import ChatRequest, ChatResponse, HealthResponse, RecipeDetail
 from rag.recipe_store import RecipeStore
 from rag.retriever import BM25Retriever, DenseRetriever, HybridRetriever
 
@@ -106,3 +106,20 @@ async def chat(req: ChatRequest, request: Request):
     """v0.3 단일 엔드포인트. 흐름 처리는 ChatOrchestrator에 위임."""
     orchestrator: ChatOrchestrator = request.app.state.chat_orchestrator
     return await orchestrator.handle(req)
+
+
+@app.get("/recipes/{recipe_id}", response_model=RecipeDetail)
+async def get_recipe(recipe_id: str, request: Request):
+    """모달 표시용 레시피 상세 조회.
+
+    추천 응답에 포함된 recipe_id로 호출. 인증 없음(Spring 앞단 책임).
+    응답: name/summary/nutrition/ingredients_structured/manuals 등 13개 필드.
+    """
+    store: RecipeStore = request.app.state.recipe_store
+    recipe = store.get_recipe_by_id(recipe_id)
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="recipe not found")
+    # JSON 원본 키는 'rcp_seq'이지만 응답에선 'recipe_id'로 노출.
+    # Pydantic 검증 직전에 키 변환만 수행 (스키마에 validator 추가 없이 단순화).
+    recipe_data = {**recipe, "recipe_id": recipe["rcp_seq"]}
+    return RecipeDetail.model_validate(recipe_data)
