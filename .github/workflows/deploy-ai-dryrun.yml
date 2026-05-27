@@ -11,6 +11,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          head -1 ~/.ssh/deploy_key && tail -1 ~/.ssh/deploy_key && wc -l ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
