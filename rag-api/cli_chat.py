@@ -33,7 +33,7 @@ except ImportError:
 
 
 DEFAULT_BASE_URL = "http://localhost:8000"
-HISTORY_SEND_LIMIT = 6   # API 요청 시 잘라 보내는 최근 메시지 개수
+HISTORY_SEND_LIMIT = 50  # API 요청 시 잘라 보내는 최근 메시지 개수
 REQUEST_TIMEOUT = 60.0
 
 
