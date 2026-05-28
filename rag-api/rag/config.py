@@ -13,6 +13,9 @@ INTENT_TIMEOUT_SECONDS = float(os.getenv("INTENT_TIMEOUT_SECONDS", "5.0"))
 SLOT_TIMEOUT_SECONDS   = float(os.getenv("SLOT_TIMEOUT_SECONDS",   "8.0"))
 ANSWER_TIMEOUT_SECONDS = float(os.getenv("ANSWER_TIMEOUT_SECONDS", "8.0"))
 
+# Spring 슬라이딩 윈도우 cap. ChatRequest validator + orchestrator slice가 동일하게 참조.
+HISTORY_MAX_MESSAGES = int(os.getenv("HISTORY_MAX_MESSAGES", "50"))
+
 CHROMA_PATH          = "chroma/recipes_v2"
 COLLECTION_NAME      = "meal_bot_recipes_v2"
 EMBEDDING_MODEL      = "BAAI/bge-m3"

@@ -10,6 +10,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from rag.config import HISTORY_MAX_MESSAGES
+
 
 class HealthResponse(BaseModel):
     """GET /healthz 응답. 정상이면 status='ok'."""
@@ -72,13 +74,13 @@ class Flags(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    """POST /chat 요청. Spring이 슬라이딩 윈도우(메시지 6개)로 history 전달.
+    """POST /chat 요청. Spring 슬라이딩 윈도우 history. 최대 길이는 HISTORY_MAX_MESSAGES (기본 50).
     slots.free_text는 Spring 누적. last_recommendations는 직전 턴만."""
 
     session_id: str = Field(min_length=1, max_length=100)
     turn_id: str = Field(min_length=1, max_length=100)
     message: str = Field(min_length=1, max_length=500)
-    history: list[ChatMessage] = Field(default_factory=list, max_length=6)
+    history: list[ChatMessage] = Field(default_factory=list, max_length=HISTORY_MAX_MESSAGES)
     slots: Slots = Field(default_factory=Slots)
     last_recommendations: list[LastRecommendation] = Field(
         default_factory=list, max_length=5
