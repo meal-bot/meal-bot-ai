@@ -112,9 +112,24 @@ def _normalize_freetext_negative(
     message: str,
     free_text_delta: str | None,
 ) -> tuple[Slots, str | None]:
-    """안전망 응답이 부정형이면 free_text를 null로 정규화."""
+    """안전망 응답이 부정형이면 free_text를 null로 정규화.
+
+    판정 규칙(exact match OR 토큰 all-match):
+    1. message를 strip().lower() 후 끝 문장부호(.?!~。…) 제거 → normalized
+    2. normalized 자체가 NEGATIVE_ANSWERS에 있으면 부정 (multi-word entry
+       "그냥 추천"/"다 좋아" 같은 항목을 그대로 잡기 위함)
+    3. 또는 공백 토큰 분리 시 모든 토큰이 NEGATIVE_ANSWERS에 있으면 부정
+       ("그냥 아무거나"처럼 단일 부정 단어들의 조합 케이스)
+    4. 빈 입력(토큰 0개)은 토큰 분기를 False로 둬서 원본 그대로 반환
+    5. 부정 판정 시 free_text=None + free_text_delta=None 함께 반환
+    """
     normalized = message.strip().lower().rstrip(".?!~。…")
-    if normalized in NEGATIVE_ANSWERS:
+    tokens = normalized.split()
+    is_negative = (
+        normalized in NEGATIVE_ANSWERS
+        or (bool(tokens) and all(token in NEGATIVE_ANSWERS for token in tokens))
+    )
+    if is_negative:
         return (
             Slots(
                 meal_times=slots.meal_times,
@@ -157,58 +172,72 @@ class ChatOrchestrator:
         history = list(request.history[-6:])
         previous_assistant_question = detect_slot_question(history)
 
-        # 2. intent 분류 (LLM 1)
-        t0 = time.perf_counter()
-        try:
-            intent_result = await classify_intent(
-                message=request.message,
-                history=history,
-                slots=slots,
-                has_last_recs=bool(last_recs),
-                previous_assistant_question=previous_assistant_question,
-            )
-        except IntentClassifyError as e:
-            logger.warning("orchestrator: intent classify failed: %s", e)
+        # 안전망 게이트: 직전 assistant 메시지가 free_text 안전망 질문이었다면
+        # 이번 턴의 사용자 응답("패스"/"없음"/"그냥 아무거나" 등)이 intent 분류기에
+        # 의해 out_of_scope/ask로 잘못 분류되어 흐름이 깨지는 케이스를 막기 위해
+        # LLM 분류를 우회하고 결정론적으로 recommend로 진행한다.
+        # slot 추출은 그대로 실행되어야 한다("매운 거 빼줘" 같은 실제 자유조건의
+        # free_text_delta를 뽑아야 하기 때문). 따라서 게이트는 intent 블록만 우회.
+        safetynet_active = _was_freetext_safetynet_asked(history)
+
+        if not safetynet_active:
+            # 2. intent 분류 (LLM 1)
+            t0 = time.perf_counter()
+            try:
+                intent_result = await classify_intent(
+                    message=request.message,
+                    history=history,
+                    slots=slots,
+                    has_last_recs=bool(last_recs),
+                    previous_assistant_question=previous_assistant_question,
+                )
+            except IntentClassifyError as e:
+                logger.warning("orchestrator: intent classify failed: %s", e)
+                timings["intent_ms"] = int((time.perf_counter() - t0) * 1000)
+                return self._build_response(
+                    request=request,
+                    slots=slots,
+                    handler_result=HandlerResult(
+                        intent="ask",
+                        answer=ANSWER_INTENT_FALLBACK,
+                        recommendations=[],
+                        flags_override={"is_fallback": True},
+                        timings=timings,
+                    ),
+                    t_start=t_start,
+                    initial_intent="<classify_error>",
+                    free_text_delta=free_text_delta,
+                )
             timings["intent_ms"] = int((time.perf_counter() - t0) * 1000)
-            return self._build_response(
-                request=request,
-                slots=slots,
-                handler_result=HandlerResult(
-                    intent="ask",
-                    answer=ANSWER_INTENT_FALLBACK,
-                    recommendations=[],
-                    flags_override={"is_fallback": True},
-                    timings=timings,
-                ),
-                t_start=t_start,
-                initial_intent="<classify_error>",
-                free_text_delta=free_text_delta,
-            )
-        timings["intent_ms"] = int((time.perf_counter() - t0) * 1000)
 
-        initial_intent = intent_result.intent
+            initial_intent = intent_result.intent
 
-        # 3. out_of_scope 즉시 반환 (slot 추출 안 함)
-        if intent_result.intent == "out_of_scope":
-            return self._build_response(
-                request=request,
-                slots=slots,
-                handler_result=HandlerResult(
-                    intent="ask",
-                    answer=ANSWER_OUT_OF_SCOPE,
-                    recommendations=[],
-                    flags_override={"out_of_scope": True},
-                    timings=timings,
-                ),
-                t_start=t_start,
-                initial_intent=initial_intent,
-                free_text_delta=free_text_delta,
-            )
+            # 3. out_of_scope 즉시 반환 (slot 추출 안 함)
+            if intent_result.intent == "out_of_scope":
+                return self._build_response(
+                    request=request,
+                    slots=slots,
+                    handler_result=HandlerResult(
+                        intent="ask",
+                        answer=ANSWER_OUT_OF_SCOPE,
+                        recommendations=[],
+                        flags_override={"out_of_scope": True},
+                        timings=timings,
+                    ),
+                    t_start=t_start,
+                    initial_intent=initial_intent,
+                    free_text_delta=free_text_delta,
+                )
 
-        # 4. refine + last_recs=[] → recommend로 재분류 (정상 처리)
-        effective_intent: str = intent_result.intent
-        if effective_intent == "refine" and not last_recs:
-            logger.info("orchestrator: refine without last_recs → recommend")
+            # 4. refine + last_recs=[] → recommend로 재분류 (정상 처리)
+            effective_intent: str = intent_result.intent
+            if effective_intent == "refine" and not last_recs:
+                logger.info("orchestrator: refine without last_recs → recommend")
+                effective_intent = "recommend"
+        else:
+            # 게이트 활성: intent LLM 우회. 로깅 추적용 마커를 남기고 recommend로 고정.
+            logger.info("orchestrator: safetynet gate active → recommend")
+            initial_intent = "<safetynet_gate>"
             effective_intent = "recommend"
 
         # 5. slot 추출 (LLM 2). ask는 슬롯 정보 필요 없지만 일관성 위해 시도하되,
@@ -296,7 +325,8 @@ class ChatOrchestrator:
             # ── free_text 안전망 ──
             # 직전에 안전망을 물어봤으면 이번 답변을 정규화하고 recommend 진행.
             # 안 물어봤고 free_text가 부족하면 안전망 질문을 한 번 던지고 종료.
-            if _was_freetext_safetynet_asked(history):
+            # safetynet_active 변수는 handle() 최상단에서 이미 한 번 계산했으므로 재사용.
+            if safetynet_active:
                 slots, free_text_delta = _normalize_freetext_negative(
                     slots, request.message, free_text_delta
                 )
