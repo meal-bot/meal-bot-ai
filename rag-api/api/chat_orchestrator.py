@@ -21,6 +21,7 @@ POST /chat의 전체 흐름을 조정한다. docs/orchestrator-v0.3.md 명세 �
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 
@@ -504,6 +505,6 @@ class ChatOrchestrator:
             "total_ms": total_ms,
             **timings,
         }
-        logger.info(str(log_payload))
+        logger.info("\n" + json.dumps(log_payload, indent=2, ensure_ascii=False))
 
         return response
