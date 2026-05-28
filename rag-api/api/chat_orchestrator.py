@@ -42,6 +42,7 @@ from api.slot_questions import (
     build_slot_question,
     detect_slot_question,
 )
+from rag.config import HISTORY_MAX_MESSAGES
 from rag.recipe_store import RecipeStore
 from rag.retriever import HybridRetriever
 
@@ -154,7 +155,7 @@ class ChatOrchestrator:
         # 1. 입력 정규화
         slots = request.slots or Slots()
         last_recs = list(request.last_recommendations or [])
-        history = list(request.history[-6:])
+        history = list(request.history[-HISTORY_MAX_MESSAGES:])
         previous_assistant_question = detect_slot_question(history)
 
         # 2. intent 분류 (LLM 1)
