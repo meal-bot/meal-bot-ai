@@ -74,8 +74,7 @@ class Flags(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    """POST /chat 요청. Spring이 슬라이딩 윈도우로 history 전달.
-    윈도우 크기는 rag.config.HISTORY_MAX_MESSAGES (기본 50).
+    """POST /chat 요청. Spring 슬라이딩 윈도우 history. 최대 길이는 HISTORY_MAX_MESSAGES (기본 50).
     slots.free_text는 Spring 누적. last_recommendations는 직전 턴만."""
 
     session_id: str = Field(min_length=1, max_length=100)
