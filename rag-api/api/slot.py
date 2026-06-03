@@ -10,6 +10,7 @@ import asyncio
 import json
 import logging
 import os
+from datetime import datetime
 from typing import Literal
 
 from openai import AsyncOpenAI
@@ -65,7 +66,7 @@ def _get_client() -> AsyncOpenAI:
 # ── 추출 함수 ─────────────────────────────────────────────────────────────
 
 
-async def extract_slots(message: str, history: list) -> SlotDelta:
+async def extract_slots(message: str, history: list, now: datetime) -> SlotDelta:
     """이번 턴 사용자 발화에서 슬롯 delta를 추출한다.
 
     Parameters
@@ -74,6 +75,9 @@ async def extract_slots(message: str, history: list) -> SlotDelta:
         이번 턴 사용자 발화
     history : list
         list[ChatMessage] 또는 list[dict], 최근 6개 메시지 (맥락 참고용)
+    now : datetime
+        호출 시각(KST 권장). "지금"/"이 시간" 같은 상대 표현을 meal_times로
+        매핑하기 위한 기준 시각으로 프롬프트에 주입된다.
 
     Returns
     -------
@@ -87,6 +91,7 @@ async def extract_slots(message: str, history: list) -> SlotDelta:
         타임아웃, API 호출 실패 등 (빈 결과는 실패 아님)
     """
     user_prompt = USER_PROMPT_TEMPLATE.format(
+        now_formatted=now.strftime("%H:%M"),
         history_formatted=format_history(history),
         message=message,
     )

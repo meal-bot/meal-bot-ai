@@ -24,6 +24,8 @@ from __future__ import annotations
 import json
 import logging
 import time
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from api.errors import IntentClassifyError, SlotExtractError
 from api.handler_result import HandlerResult
@@ -248,7 +250,8 @@ class ChatOrchestrator:
         delta: SlotDelta | None = None
         t1 = time.perf_counter()
         try:
-            delta = await extract_slots(message=request.message, history=history)
+            now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
+            delta = await extract_slots(message=request.message, history=history, now=now_kst)
         except SlotExtractError as e:
             logger.warning("orchestrator: slot extract failed: %s", e)
             slot_extract_failed = True
