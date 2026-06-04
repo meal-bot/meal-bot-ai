@@ -10,7 +10,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse
 
 from api.chat_orchestrator import ChatOrchestrator
@@ -106,6 +106,26 @@ async def chat(req: ChatRequest, request: Request):
     """v0.3 단일 엔드포인트. 흐름 처리는 ChatOrchestrator에 위임."""
     orchestrator: ChatOrchestrator = request.app.state.chat_orchestrator
     return await orchestrator.handle(req)
+
+
+@app.get("/recipes/random", response_model=list[RecipeDetail])
+async def get_random_recipes(
+    request: Request,
+    response: Response,
+    count: int = Query(default=10, ge=1, le=50),
+):
+    """메인 화면 추천 카드용 랜덤 레시피 N건.
+
+    매 요청마다 중복 없이 새로 추첨. GET 캐싱 방지 위해 no-store.
+    응답 스키마는 GET /recipes/{recipe_id}와 동일(RecipeDetail).
+    """
+    response.headers["Cache-Control"] = "no-store"
+    store: RecipeStore = request.app.state.recipe_store
+    recipes = store.get_random_recipes(count)
+    return [
+        RecipeDetail.model_validate({**r, "recipe_id": r["rcp_seq"]})
+        for r in recipes
+    ]
 
 
 @app.get("/recipes/{recipe_id}", response_model=RecipeDetail)

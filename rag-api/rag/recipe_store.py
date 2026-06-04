@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,12 @@ class RecipeStore:
         if hit is None:
             logger.debug("Recipe not found: %s (normalized=%s)", recipe_id, normalized)
         return hit
+
+    def get_random_recipes(self, count: int) -> list[dict]:
+        """랜덤 N건 반환 (중복 없음). count가 보유 건수보다 크면 전체 반환."""
+        values = list(self._recipes.values())
+        k = min(count, len(values))
+        return random.sample(values, k)
 
     def get_recipes_by_ids(self, recipe_ids: list[str]) -> list[dict]:
         """배치 조회. 입력 순서 보존, 없는 ID는 결과에서 제외."""
