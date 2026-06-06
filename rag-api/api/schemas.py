@@ -149,7 +149,7 @@ class RecipeIngredient(BaseModel):
     """식재료 한 항목."""
 
     name: str
-    amount: str
+    amount: str | None = None
     note: str | None = None
 
 
