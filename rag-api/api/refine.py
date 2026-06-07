@@ -16,6 +16,7 @@ rerank 실패는 reranker 내부 fallback에 위임 (응답의 is_fallback 플�
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -34,6 +35,7 @@ from rag.answer_generator import (
     AnswerValidationError,
     generate_answer,
 )
+from rag.config import REFINE_TIMEOUT_SECONDS
 from rag.recipe_store import RecipeStore
 from rag.reranker import rerank
 from rag.retriever import HybridRetriever
@@ -153,17 +155,29 @@ async def _rebuild_query_with_llm(
     client = _get_client()
 
     try:
-        response = await client.chat.completions.create(
-            model="gpt-5-mini",
-            max_completion_tokens=1000,
-            reasoning_effort="minimal",
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            timeout=5.0,
+        # SDK timeout과 asyncio.wait_for 둘 다 같은 값으로 호출 전체(SDK 내부 hang 포함)를 보호한다.
+        response = await asyncio.wait_for(
+            client.chat.completions.create(
+                model="gpt-5-mini",
+                max_completion_tokens=1000,
+                reasoning_effort="minimal",
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                timeout=REFINE_TIMEOUT_SECONDS,
+            ),
+            timeout=REFINE_TIMEOUT_SECONDS,
         )
+    except asyncio.TimeoutError as e:
+        logger.warning(
+            "refine._rebuild_query_with_llm: timeout after %.1fs",
+            REFINE_TIMEOUT_SECONDS,
+        )
+        raise QueryRebuildError(
+            f"timeout after {REFINE_TIMEOUT_SECONDS}s"
+        ) from e
     except Exception as e:
         logger.warning("refine._rebuild_query_with_llm: LLM call failed: %s", e)
         raise QueryRebuildError(f"LLM call failed: {e}") from e
