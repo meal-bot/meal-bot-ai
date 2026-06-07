@@ -12,6 +12,8 @@ RERANK_TIMEOUT_SECONDS = float(os.getenv("RERANK_TIMEOUT_SECONDS", "30.0"))
 INTENT_TIMEOUT_SECONDS = float(os.getenv("INTENT_TIMEOUT_SECONDS", "5.0"))
 SLOT_TIMEOUT_SECONDS   = float(os.getenv("SLOT_TIMEOUT_SECONDS",   "8.0"))
 ANSWER_TIMEOUT_SECONDS = float(os.getenv("ANSWER_TIMEOUT_SECONDS", "8.0"))
+REFINE_TIMEOUT_SECONDS = float(os.getenv("REFINE_TIMEOUT_SECONDS", "10.0"))
+QA_TIMEOUT_SECONDS     = float(os.getenv("QA_TIMEOUT_SECONDS",     "10.0"))
 
 # Spring 슬라이딩 윈도우 cap. ChatRequest validator + orchestrator slice가 동일하게 참조.
 HISTORY_MAX_MESSAGES = int(os.getenv("HISTORY_MAX_MESSAGES", "50"))

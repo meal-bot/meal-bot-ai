@@ -94,4 +94,6 @@ artifacts/enrichment_v2_progress/
 # enrichment 백업
 data/recipes_enriched.backup.json
 
+# ===== Local benchmark / 임시 스크립트 (재생성 가능) =====
 benchmark.py
+benchmark_*.py

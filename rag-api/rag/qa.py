@@ -22,6 +22,7 @@ from rag.config import (
     RAG_QA_REASONING_EFFORT,
     RAG_QA_RETRY_LIMIT,
     QA_MAX_DOCS,
+    QA_TIMEOUT_SECONDS,
     LOG_DIR,
     QA_LOG_FILE_PATTERN,
 )
@@ -173,6 +174,57 @@ async def _call_llm(system_prompt: str, user_prompt: str) -> QAResponse:
     return parsed
 
 
+# ── 재시도 루프 ───────────────────────────────────────────────────────────────
+
+async def _run_qa_attempts(
+    user_prompt_base: str,
+) -> tuple[QAResponse | None, int, list[str], str | None]:
+    """LLM 호출 + 검증을 최대 RAG_QA_RETRY_LIMIT+1회 시도한다.
+
+    개별 시도 실패(예외/validation)는 내부에서 흡수하고 재시도한다.
+    전체 시간 상한(QA_TIMEOUT_SECONDS)은 호출부의 asyncio.wait_for가 담당한다.
+    반환: (parsed, retry_count, last_errors, error_detail).
+    """
+    parsed: QAResponse | None = None
+    last_errors: list[str] = []
+    error_detail: str | None = None
+    retry_count = 0
+    user_prompt = user_prompt_base
+
+    max_attempts = RAG_QA_RETRY_LIMIT + 1
+    for attempt in range(max_attempts):
+        try:
+            candidate = await _call_llm(SYSTEM_PROMPT, user_prompt)
+            ok, errors = _validate_response(candidate)
+            if ok:
+                parsed = candidate
+                last_errors = []
+                break
+
+            last_errors = errors
+            logger.warning(
+                f"qa validation 실패 (attempt={attempt + 1}): {errors}"
+            )
+        except Exception as e:
+            last_errors = [f"LLM 호출 예외: {e}"]
+            error_detail = str(e)
+            logger.warning(
+                f"qa LLM 호출 실패 (attempt={attempt + 1}): {e}"
+            )
+
+        # 재시도 여지가 남았으면 프롬프트 보강
+        if attempt < max_attempts - 1:
+            retry_count += 1
+            error_block = "\n".join(f"- {m}" for m in last_errors)
+            user_prompt = (
+                f"{user_prompt_base}\n\n"
+                f"[이전 응답 오류]\n{error_block}\n"
+                f"수정해서 다시 응답하시오."
+            )
+
+    return parsed, retry_count, last_errors, error_detail
+
+
 # ── 메인 엔트리 ───────────────────────────────────────────────────────────────
 
 async def answer(
@@ -229,41 +281,20 @@ async def answer(
     # 3. 유저 프롬프트 빌드
     user_prompt_base = build_qa_user_prompt(safe_query, docs, safe_history)
 
-    # 4. LLM 호출 (1차 + 최대 RAG_QA_RETRY_LIMIT 회 재시도)
+    # 4. LLM 호출 (재시도 루프 전체를 QA_TIMEOUT_SECONDS로 감싸 총 예산 상한 보장)
     parsed: QAResponse | None = None
     last_errors: list[str] = []
-    user_prompt = user_prompt_base
-
-    max_attempts = RAG_QA_RETRY_LIMIT + 1
-    for attempt in range(max_attempts):
-        try:
-            candidate = await _call_llm(SYSTEM_PROMPT, user_prompt)
-            ok, errors = _validate_response(candidate)
-            if ok:
-                parsed = candidate
-                last_errors = []
-                break
-
-            last_errors = errors
-            logger.warning(
-                f"qa validation 실패 (attempt={attempt + 1}): {errors}"
-            )
-        except Exception as e:
-            last_errors = [f"LLM 호출 예외: {e}"]
-            error_detail = str(e)
-            logger.warning(
-                f"qa LLM 호출 실패 (attempt={attempt + 1}): {e}"
-            )
-
-        # 재시도 여지가 남았으면 프롬프트 보강
-        if attempt < max_attempts - 1:
-            retry_count += 1
-            error_block = "\n".join(f"- {m}" for m in last_errors)
-            user_prompt = (
-                f"{user_prompt_base}\n\n"
-                f"[이전 응답 오류]\n{error_block}\n"
-                f"수정해서 다시 응답하시오."
-            )
+    timed_out = False
+    try:
+        parsed, retry_count, last_errors, error_detail = await asyncio.wait_for(
+            _run_qa_attempts(user_prompt_base),
+            timeout=QA_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        timed_out = True
+        last_errors = [f"timeout after {QA_TIMEOUT_SECONDS}s"]
+        logger.warning("qa: timeout after %.1fs", QA_TIMEOUT_SECONDS)
+        # parsed=None 유지 → 아래 5단계 fallback 경로에 그대로 합류
 
     # 5. 최종 처리
     if parsed is None:
@@ -299,6 +330,8 @@ async def answer(
         "qa_failed":           final.qa_failed,
         "is_fallback":         final.is_fallback,
     }
+    if timed_out:
+        log_entry["skip_reason"] = f"timeout after {QA_TIMEOUT_SECONDS}s"
     if validation_errors:
         log_entry["validation_errors"] = validation_errors
     if error_detail:
