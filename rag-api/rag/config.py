@@ -31,7 +31,7 @@ BM25_TOP_K      = 50
 DENSE_TOP_K = 50
 
 # Hybrid
-RRF_TOP_K = 30
+RRF_TOP_K = int(os.getenv("RRF_TOP_K", "15"))
 RRF_K     = 60
 
 # LLM Rerank
