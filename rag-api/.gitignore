@@ -93,3 +93,5 @@ artifacts/enrichment_v2_progress/
 
 # enrichment 백업
 data/recipes_enriched.backup.json
+
+benchmark.py
