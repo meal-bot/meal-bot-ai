@@ -104,11 +104,6 @@ async def healthz():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest, request: Request):
     """v0.3 단일 엔드포인트. 흐름 처리는 ChatOrchestrator에 위임."""
-    # [DEBUG last-rec-trace] 책임 경계 확정용 임시 로깅. 조사 후 롤백.
-    # FastAPI가 req 파싱 시 body를 이미 읽어 Request 객체에 캐시하므로 재읽기 안전.
-    raw = await request.json()
-    logger.info("DEBUG raw last_recommendations=%r", raw.get("last_recommendations"))
-    logger.info("DEBUG parsed last_rec count=%d", len(req.last_recommendations or []))
     orchestrator: ChatOrchestrator = request.app.state.chat_orchestrator
     return await orchestrator.handle(req)
 
