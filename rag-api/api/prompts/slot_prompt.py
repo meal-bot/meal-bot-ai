@@ -85,6 +85,14 @@ SYSTEM_PROMPT = """당신은 한국어 음식 추천 챗봇의 슬롯 추출기�
 예시 8 — 빈 결과 (정상)
 입력: "안녕"
 출력: {"meal_times": null, "purpose": null, "free_text_delta": null}
+
+예시 9 — "지금"/현재 시점 표현 (현재 시각 주입 적용)
+입력: (현재 시각: 12:30 KST) "지금 추천해줘"
+출력: {"meal_times": ["점심"], "purpose": null, "free_text_delta": null}
+
+예시 10 — 시간 무관 발화 (현재 시각 무시, meal_times 비움)
+입력: (현재 시각: 12:30 KST) "없어"
+출력: {"meal_times": null, "purpose": null, "free_text_delta": null}
 """
 
 
