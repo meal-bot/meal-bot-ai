@@ -111,12 +111,8 @@ def _was_freetext_safetynet_asked(history: list[ChatMessage]) -> bool:
     return SAFETYNET_SIGNATURE in getattr(last, "content", "")
 
 
-def _normalize_freetext_negative(
-    slots: Slots,
-    message: str,
-    free_text_delta: str | None,
-) -> tuple[Slots, str | None]:
-    """안전망 응답이 부정형이면 free_text를 null로 정규화.
+def _is_negative(message: str) -> bool:
+    """발화가 안전망 부정 응답("없어"/"패스"/"그냥 아무거나" 등)인지 판정.
 
     판정 규칙(exact match OR 토큰 all-match):
     1. message를 strip().lower() 후 끝 문장부호(.?!~。…) 제거 → normalized
@@ -124,21 +120,32 @@ def _normalize_freetext_negative(
        "그냥 추천"/"다 좋아" 같은 항목을 그대로 잡기 위함)
     3. 또는 공백 토큰 분리 시 모든 토큰이 NEGATIVE_ANSWERS에 있으면 부정
        ("그냥 아무거나"처럼 단일 부정 단어들의 조합 케이스)
-    4. 빈 입력(토큰 0개)은 토큰 분기를 False로 둬서 원본 그대로 반환
-    5. 부정 판정 시 free_text=None + free_text_delta=None 함께 반환
+    4. 빈 입력(토큰 0개)은 토큰 분기를 False로 둬서 비-부정으로 본다
     """
     normalized = message.strip().lower().rstrip(".?!~。…")
     tokens = normalized.split()
-    is_negative = (
+    return (
         normalized in NEGATIVE_ANSWERS
         or (bool(tokens) and all(token in NEGATIVE_ANSWERS for token in tokens))
     )
-    if is_negative:
+
+
+def _normalize_freetext_negative(
+    slots: Slots,
+    message: str,
+    free_text_delta: str | None,
+) -> tuple[Slots, str | None]:
+    """안전망 응답이 부정형이면 이번 턴 free_text_delta만 null로 정규화.
+
+    누적 slots.free_text는 보존한다(merge 직전 delta 무효화로 이미 신규분이
+    반영되지 않으므로, 여기서는 이번 턴 delta=None만 돌려주면 충분하다).
+    """
+    if _is_negative(message):
         return (
             Slots(
                 meal_times=slots.meal_times,
                 purpose=slots.purpose,
-                free_text=None,
+                free_text=slots.free_text,
             ),
             None,
         )
@@ -262,6 +269,12 @@ class ChatOrchestrator:
         # meal_times/purpose delta를 다음 추천 조건으로 저장하면 슬롯이 오염된다.
         # 예: "다이어트에 좋아?" → purpose="light"로 잘못 누적되어 다음 refine 결과를 흔듦.
         # out_of_scope는 단계 3에서 이미 반환되지만 방어적으로 화이트리스트에 포함.
+        # 안전망 부정 응답("없어" 등) 턴의 delta는 ambient 추론(과적용된 현재시각
+        # meal_times 등)이라 신뢰하지 않는다. 빈 delta로 폐기해 누적 슬롯을 보존한다.
+        # (None이 아니라 빈 SlotDelta: 추출 실패가 아니라 "추출됐으나 신뢰 불가로 폐기")
+        if safetynet_active and _is_negative(request.message):
+            delta = SlotDelta()
+
         if delta is not None and effective_intent in {"recommend", "refine", "slot_fill"}:
             slots = self._merge_slots(slots, delta)
 
