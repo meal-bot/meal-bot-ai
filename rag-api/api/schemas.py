@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_serializer, model_validator
 
 from rag.config import HISTORY_MAX_MESSAGES
 
@@ -164,6 +164,19 @@ class RecipeIngredientsStructured(BaseModel):
     garnish: list[RecipeIngredient] = Field(default_factory=list)
 
 
+def round_nutrition(nutrition: dict) -> dict:
+    """영양 dict의 수치를 표시용 정수로 반올림. 키 누락/None은 안전 통과."""
+    if not isinstance(nutrition, dict):
+        return nutrition
+    keys = ("energy_kcal", "protein_g", "carbs_g", "fat_g", "sodium_mg")
+    result = dict(nutrition)
+    for k in keys:
+        v = result.get(k)
+        if isinstance(v, (int, float)):
+            result[k] = round(v)
+    return result
+
+
 class RecipeNutrition(BaseModel):
     """영양 정보. 1146건 전체에서 5개 키 모두 채워져 있어 non-optional."""
 
@@ -172,6 +185,10 @@ class RecipeNutrition(BaseModel):
     carbs_g: float
     fat_g: float
     sodium_mg: float
+
+    @field_serializer("energy_kcal", "protein_g", "carbs_g", "fat_g", "sodium_mg")
+    def _round_nutrition(self, v: float) -> int:
+        return round(v)
 
 
 class RecipeDetail(BaseModel):
