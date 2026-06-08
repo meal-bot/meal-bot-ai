@@ -8,6 +8,8 @@ import json
 
 from pydantic import BaseModel, Field
 
+from api.schemas import round_nutrition
+
 
 # ── 문서 표시 필드 ────────────────────────────────────────────────────────────
 # 사용자 프롬프트에 노출할 레시피 필드 순서.
@@ -404,6 +406,8 @@ def _format_doc_block(index: int, doc: dict) -> str:
         value = doc[field]
         if _is_empty(value):
             continue
+        if field == "nutrition":
+            value = round_nutrition(value)
         lines.append(f"- {field}: {_format_value(value)}")
     return "\n".join(lines)
 
