@@ -130,6 +130,29 @@ def _is_negative(message: str) -> bool:
     )
 
 
+# 발화에 "명시적 끼니 표현"이 있는지 판정하기 위한 키워드.
+# 목적: 클라이언트가 이미 meal_times를 준 상태에서, 발화에 끼니 표현이 없는데도
+#       LLM이 현재 시각(ambient)을 meal_times로 과적용하는 것을 막기 위함.
+# 주의: "지금/이따/방금" 같은 상대시간 트리거는 의도적으로 제외한다.
+#       그런 표현은 사용자가 현재 시각 기반 추론을 원한 것이므로 ambient가 정상 작동해야 한다.
+_TIME_EXPRESSION_KEYWORDS = frozenset({
+    # 끼니 enum (조사가 붙어 등장하므로 부분 문자열 매칭)
+    "아침", "점심", "저녁", "간식", "야식",
+    # 끼니 동의어 (slot_prompt 매핑표 기준)
+    "조식", "런치", "디너", "스낵", "밤참", "새벽", "아점", "오후", "브런치",
+})
+
+
+def _has_time_expression(message: str) -> bool:
+    """발화에 명시적 끼니 표현이 포함돼 있는지 검사 (부분 문자열 매칭).
+
+    상대시간 트리거(지금/이따 등)는 포함하지 않는다 — 그 경우는 ambient를 의도한 것이다.
+    """
+    if not message:
+        return False
+    return any(keyword in message for keyword in _TIME_EXPRESSION_KEYWORDS)
+
+
 def _normalize_freetext_negative(
     slots: Slots,
     message: str,
@@ -274,6 +297,24 @@ class ChatOrchestrator:
         # (None이 아니라 빈 SlotDelta: 추출 실패가 아니라 "추출됐으나 신뢰 불가로 폐기")
         if safetynet_active and _is_negative(request.message):
             delta = SlotDelta()
+
+        # ambient time 과적용 방어:
+        # 클라이언트가 이미 meal_times를 줬는데 발화에 끼니 표현이 없다면,
+        # delta.meal_times는 LLM이 현재 시각을 과적용한 것일 가능성이 높다.
+        # 이 경우 delta.meal_times만 폐기해 클라이언트 주입값을 보존한다.
+        # (purpose / free_text_delta 등 나머지 delta 필드는 그대로 살린다.)
+        if (
+            delta is not None
+            and delta.meal_times is not None
+            and slots.meal_times
+            and not _has_time_expression(request.message)
+        ):
+            logger.info(
+                "orchestrator: ambient meal_times suppressed "
+                "(client meal_times=%s kept, dropped delta meal_times=%s)",
+                slots.meal_times, delta.meal_times,
+            )
+            delta.meal_times = None
 
         if delta is not None and effective_intent in {"recommend", "refine", "slot_fill"}:
             slots = self._merge_slots(slots, delta)
