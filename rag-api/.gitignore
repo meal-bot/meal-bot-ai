@@ -97,3 +97,8 @@ data/recipes_enriched.backup.json
 # ===== Local benchmark / 임시 스크립트 (재생성 가능) =====
 benchmark.py
 benchmark_*.py
+
+# demo verification outputs (재실행 산출물 — 레포에 불포함)
+scripts/*_result*.json
+scripts/*_server.log
+scripts/discovery_result.json
